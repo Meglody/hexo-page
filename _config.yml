@@ -101,7 +101,6 @@ theme: yun
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
+# 使用 actions-gh-pages@v3 自动化部署
 deploy:
-  type: git
-  repo: https://github.com/Meglody/hexo-page
-  branch: main
+  type: ''
