@@ -90,7 +90,9 @@ pagination_dir: page
 
 # Include / Exclude file(s)
 ## include:/exclude: options only apply to the 'source/' folder
+## https://github.com/theme-next/hexo-theme-next/issues/410
 include:
+  - .nojekyll
 exclude:
 ignore:
 
@@ -104,6 +106,3 @@ theme: yun
 # 使用 actions-gh-pages@v3 自动化部署
 deploy:
   type: ''
-## https://github.com/theme-next/hexo-theme-next/issues/410
-include:
-  - source/.nojekyll
