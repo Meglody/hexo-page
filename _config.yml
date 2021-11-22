@@ -104,3 +104,6 @@ theme: yun
 # 使用 actions-gh-pages@v3 自动化部署
 deploy:
   type: ''
+## https://github.com/theme-next/hexo-theme-next/issues/410
+include:
+  - .nojekyll
