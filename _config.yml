@@ -90,7 +90,6 @@ pagination_dir: page
 
 # Include / Exclude file(s)
 ## include:/exclude: options only apply to the 'source/' folder
-## https://github.com/theme-next/hexo-theme-next/issues/410
 include:
 exclude:
 ignore:
@@ -104,4 +103,8 @@ theme: yun
 ## Docs: https://hexo.io/docs/one-command-deployment
 # 使用 actions-gh-pages@v3 自动化部署
 deploy:
-  type: ''
+  # type: git
+  # repo: https://github.com/Meglody/Meglody.github.io
+  # branch: gh-pages
+  # message: deploy
+

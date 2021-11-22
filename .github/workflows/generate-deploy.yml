@@ -37,15 +37,14 @@ jobs:
           
       # 执行hexo generate命令
       - name: Act hexo generate
-        run: |
-          npm i && npx hexo clean && npx hexo g
+        run: npm i && npx hexo clean && npx hexo g
 
       # 部署
       - name: Act hexo deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
+          publish_branch: master
           publish_dir: ./public
           enable_jekyll: true
           force_orphan: true
