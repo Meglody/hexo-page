@@ -106,4 +106,4 @@ deploy:
   type: ''
 ## https://github.com/theme-next/hexo-theme-next/issues/410
 include:
-  - .nojekyll
+  - source/.nojekyll
