@@ -43,7 +43,7 @@ jobs:
       # 检查文件夹
       - name: Check folder
         run: |
-          ls -a
+          cd public && ls && cd ../
 
       # 部署
       - name: Act hexo deploy
