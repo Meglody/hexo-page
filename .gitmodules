@@ -1,4 +1,4 @@
-[submodule "hexo-theme-yun"]
-	path = hexo-theme-yun
-	url = git@github.com:Meglody/hexo-theme-yun.git
+[submodule "themes/yun"]
+	path = themes/yun
+	url = https://github.com/Meglody/hexo-theme-yun
 	branch = dev2
