@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [14.4.0]
+        node-version: [14.x]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -38,7 +38,7 @@ jobs:
       # 执行hexo generate命令
       - name: Act hexo generate
         run: |
-          ls && rm -rf node_modules && ls && npm ci && npx hexo clean && npx hexo g
+          rm -rf ./node_modules && npm ci && npx hexo clean && npx hexo generate
         
       # 检查文件夹
       - name: Check folder
