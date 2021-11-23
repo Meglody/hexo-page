@@ -28,6 +28,8 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          submodules: true
 
       # 检查node版本
       - name: Use Node.js ${{ matrix.node-version }}
