@@ -1,0 +1,106 @@
+# 自定义主题的主色调
+colors:
+  primary: "#6200ee"
+  # bg: "#F5F5F5"
+  selection_bg: "#8e71c1" # 选取文字时的背景色
+  # 标签云中标签的起始色和结束色
+  # tag_start_color:
+  # tag_end_color:
+
+# 可以为你的标签指定色彩，默认色 #333。
+tags:
+  Vue: "#4fc08d"
+  Hexo: "#0E834D"
+  CSS: "#5298d1"
+  Node.js: "#026E00"
+  Git: "#F14E32"
+  React: "#61dafb"
+  Python: "#3776ab"
+  PHP: "#8892BF"
+  VS Code: "#0066B8"
+  JavaScript: "#F4DF4F"
+  TypeScript: "#317AC6"
+  Laravel: "#F4645F"
+
+# 可以为你的分类指定色彩，默认色 #333。
+categories:
+  笔记: dimgray
+
+# 如果您有想自定义的资源要加载，请添加到 head 中。
+# 遵照以下示例，自定义您要添加的 css 与 js 资源。
+# head:
+#   css:
+#     _data:
+#       # source/css/_data/custom.css
+#       custom: //example.min.css
+#   js:
+#     base:
+#     async:
+#     defer:
+
+# 设置网站图标（确保你的 favicon.ico 文件已放置于 source 文件夹下），如下设置：
+# 现在的 Yun Logo 可以根据浏览器的亮暗主题，采用对应的相反色。
+# 譬如：亮色浏览器 LOGO 为黑色描边，暗色浏览器 LOGO 为白色描边。
+# 如果你想要为自己的图标添加该特性，你的图标须为 svg 文件，并为其添加对应样式。 
+# favicon: /favicon.ico
+
+# 参看: https://hexo-theme-yun.vercel.app/guide/config.html#cdn
+# cdn:
+#   pre: https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@latest
+
+social:
+  - name: QQ
+    # https://isux.tencent.com/wp-content/uploads/2016/05/20160512101222609.pdf
+    link: https://wpa.qq.com/msgrd?v=3&uin=30755703&site=qq&menu=yes
+    icon: icon-qq-line
+    color: "#12B7F5"
+  - name: GitHub
+    link: https://github.com/Meglody
+    icon: icon-github-line
+    color: "#181717"
+  - name: E-Mail
+    link: mailto:30755703@qq.com
+    icon: icon-mail-line
+    color: "#8E71C1"
+  - name: 网易云音乐
+    link: https://music.163.com/#/user/home?id=260476301
+    icon: icon-netease-cloud-music-line
+    color: "#C10D0C"
+  - name: 哔哩哔哩动画
+    link: https://space.bilibili.com/453065
+    icon: icon-bilibili-line
+    color: "#FF8EB3"
+
+# 标语动画
+# 首页的垂直交错排列文字效果。默认开启。
+banner:
+  enable: false
+  title: 卡西猫倒的小站
+  src: /js/ui/banner.js
+  border: true
+  cloud:
+    enable: true
+    color: "white"
+  go_down:
+    enable: true
+    icon: icon-arrow-down-s-line
+
+# 点击页面的烟花效果
+fireworks:
+  enable: false
+  colors:
+    - "102, 167, 221"
+    - "62, 131, 225"
+    - "33, 78, 194"
+
+# 头像
+avatar:
+  enable: true
+  url: /images/avartar2.jpeg
+  rounded: true
+  opacity: 1
+  mickey_mouse: false
+  status:
+    enable: true
+    emoji: 🐳
+    message: 神游中
