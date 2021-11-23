@@ -96,7 +96,7 @@ fireworks:
 # 头像
 avatar:
   enable: true
-  url: /images/avartar2.jpeg
+  url: /images/avatar2.jpeg
   rounded: true
   opacity: 1
   mickey_mouse: false
