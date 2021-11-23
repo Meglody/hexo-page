@@ -38,7 +38,7 @@ jobs:
       # 执行hexo generate命令
       - name: Act hexo generate
         run: |
-          npm i && npx hexo clean && npx hexo g
+          rm -rf node_modules && npm ci && npx hexo clean && npx hexo g
         
       # 检查文件夹
       - name: Check folder
