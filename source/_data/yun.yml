@@ -74,12 +74,12 @@ social:
 # 标语动画
 # 首页的垂直交错排列文字效果。默认开启。
 banner:
-  enable: false
+  enable: true
   title: 卡西猫倒的小站
   src: /js/ui/banner.js
   border: true
   cloud:
-    enable: true
+    enable: false
     color: "white"
   go_down:
     enable: true
