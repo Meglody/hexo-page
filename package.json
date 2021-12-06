@@ -5,8 +5,10 @@
   "scripts": {
     "clean": "hexo clean",
     "server": "hexo server",
+    "prebuild": "./prebuild.bash",
     "build": "npm run clean && hexo generate",
     "deploy": "npm run clean && hexo deploy",
+    "predev": "./prebuild.bash",
     "dev": "npm run clean && cross-env NODE_ENV=development && npm run server"
   },
   "hexo": {

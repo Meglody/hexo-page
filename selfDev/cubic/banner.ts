@@ -1,8 +1,10 @@
 import useShader, { locationType } from './useShader'
 import {Matrix4} from 'three'
 import imgSrc from './images/mf.jpg'
-// import cubicVertex from './shaders/cubicVertex.glsl'
-// import cubicFragment from './shaders/cubicFragment.glsl'
+import cubicVertexShader from './shaders/cubic/cubic.vert'
+import cubicFragmentShader from './shaders/cubic/cubic.frag'
+import particleVertexShader from './shaders/particles/particles.vert'
+import particleFragmentShader from './shaders/particles/particles.frag'
 const {initShaders} = useShader
 const prepareCanvas = () => {
     const canvas = document.createElement('canvas')
@@ -13,44 +15,6 @@ const prepareCanvas = () => {
     const gl = canvas.getContext('webgl')
     return gl as WebGLRenderingContext
 }
-const cubicVertexShader = `
-    attribute vec4 a_cubic_Position;
-    attribute vec2 a_cubic_Pin;
-    uniform mat4 u_cubic_ModelMatrix;
-    varying vec2 v_cubic_Pin;
-    void main(){
-        gl_Position = u_cubic_ModelMatrix * a_cubic_Position;
-        v_cubic_Pin = a_cubic_Pin;
-    }
-`
-const cubicFragmentShader = `
-    precision mediump float;
-    uniform sampler2D u_cubic_Sampler;
-    varying vec2 v_cubic_Pin;
-
-    void main(){
-        gl_FragColor = texture2D(u_cubic_Sampler, v_cubic_Pin);
-    }
-`
-const particleVertexShader = `
-    attribute vec4 a_particle_Position;
-    uniform mat4 u_particle_ModelMatrix;
-    void main(){
-        gl_PointSize = 15.0;
-        gl_Position = u_particle_ModelMatrix * a_particle_Position;
-    }
-`
-const particleFragmentShader = `
-    precision mediump float;
-    void main(){
-        float dist = distance(gl_PointCoord, vec2(0.5, 0.5));
-        if(dist < 0.5){
-            gl_FragColor = vec4(0.87, 0.91, 1.0, 0.8);
-        }else{
-            discard;
-        }
-    }
-`
 const cubicSourceOrigin = [
     -0.5, -0.5, -0.5, 0, 0,
     -0.5, 0.5, -0.5, 0, 0.5,
