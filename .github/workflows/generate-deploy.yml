@@ -40,7 +40,7 @@ jobs:
       # 执行hexo generate命令
       - name: Act hexo generate
         run: |
-          rm -rf ./node_modules && npm ci && npx hexo clean && npx hexo generate
+          rm -rf ./node_modules && npm ci && npm run build
         
       # 检查文件夹
       - name: Check folder
