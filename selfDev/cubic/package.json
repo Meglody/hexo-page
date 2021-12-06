@@ -7,7 +7,7 @@
   "typings": "dist/types.banner.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "rollup -c rollup.config.ts && cp dist/banner.js ../../source/js/ui/banner.js"
+    "build": "rollup -c rollup.config.ts && ./cp.bash"
   },
   "author": "meglody",
   "license": "ISC",
