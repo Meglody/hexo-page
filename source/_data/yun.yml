@@ -7,6 +7,26 @@ colors:
   # tag_start_color:
   # tag_end_color:
 
+# 设置导航对应图标及链接
+menu:
+  home:
+    path: /
+    icon: icon-home-4-line
+  list:
+    - type: archives
+      path: /archives/
+      icon: icon-archive-line
+    - type: categories
+      path: /categories/
+      icon: icon-folder-2-line
+    - type: tags
+      path: /tags/
+      icon: icon-price-tag-3-line
+  custom:
+    title: Yun主题文档
+    path: https://yun.yunyoujun.cn
+    icon: icon-settings-line
+
 # 可以为你的标签指定色彩，默认色 #333。
 tags:
   Vue: "#4fc08d"
@@ -92,6 +112,30 @@ fireworks:
     - "102, 167, 221"
     - "62, 131, 225"
     - "33, 78, 194"
+
+# 随机多边形背景
+trianglify:
+  enable: true
+  cellSize: 75
+  width: 800
+  height: 600
+  palette: '["YlGnBu", "GnBu", "Purples", "Blues"]'
+  opacity: 0.5
+
+# 打赏
+reward:
+  enable: true
+  icon: icon-hand-coin-line
+  comment: 我很可爱，请给我钱.
+  methods:
+    - name: 支付宝
+      path: https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/alipay.jpg
+      color: "#00A3EE"
+      icon: icon-alipay-line
+    - name: 微信支付
+      path: https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/wechatpay-qrcode.jpg
+      color: "#2DC100"
+      icon: icon-wechat-pay-line
 
 # 头像
 avatar:
