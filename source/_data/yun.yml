@@ -48,15 +48,13 @@ categories:
 
 # 如果您有想自定义的资源要加载，请添加到 head 中。
 # 遵照以下示例，自定义您要添加的 css 与 js 资源。
-# head:
-#   css:
-#     _data:
-#       # source/css/_data/custom.css
-#       custom: //example.min.css
-#   js:
-#     base:
-#     async:
-#     defer:
+head:
+  css: 
+    - /css/markdown-mine.css
+  js:
+    base:
+    async:
+    defer:
 
 # 设置网站图标（确保你的 favicon.ico 文件已放置于 source 文件夹下），如下设置：
 # 现在的 Yun Logo 可以根据浏览器的亮暗主题，采用对应的相反色。

@@ -1,6 +1,7 @@
 ---
 title: 使用TypeScript开发WebGL（一）使用着色器
 date: 2021-12-06 10:59:53
+updated: 2021-12-07 13:48:43
 tags: 
 - WebGL
 - TypeScript
@@ -8,9 +9,9 @@ categories:
 - 笔记
 ---
 
-## 前言
+## 一、前言
 首先对于web系前端来说，我们在使用WebGL开发的首选语言肯定是javascript，在接触着色器语言后，我们知道可以用：
-``` html
+```html
 <script type="x-shader/x-vertex"></script>
 <script type="x-shader/x-fragment"></script>
 ```
@@ -24,12 +25,12 @@ categories:
 
 ### 使用类型审查
 
-``` html
+```html
 <script id="vShader" type="x-shader/x-vertex"></script>
 <script id="fShader" type="x-shader/x-fragment"></script>
 ```
 
-``` ts
+```typescript
 const vertexShader = document.querySelector('#vShader').textContent
 const fragmentShader = document.querySelector('#fShader').textContent
 console.log(vertexShader, fragmentShader)
@@ -42,14 +43,14 @@ TypeScript在这里也会标记vertexShader、fragmentShader两个变量为strin
 
 为了验证这一点，我们可以通过TypeScript的类型声明提示来一窥WebGL的gl.shaderSource方法：
 
-``` html
+```html
 <body>
     <canvas id="canvas"></canvas>
 </body>
 <script id="vShader" type="x-shader/x-vertex"></script>
 <script id="fShader" type="x-shader/x-fragment"></script>
 ```
-``` ts
+```typescript
 const canvas = document.querySelect('#canvas')
 const vsSource = document.querySelect('#vShader').textContent
 const shaderType = gl.VERTEX_SHADER
@@ -62,11 +63,11 @@ gl.compileShader(shader)
 * shader是着色器对象;
 * 而source只是一个字符串类型;
 
-那么既然是字符串类型，我们何不直接写在TypeScript文件中呢？
+> 那么既然是字符串类型，我们何不直接写在TypeScript文件中呢？
 
 于是我们大胆可以这样写：
 
-``` ts
+```typescript
 const canvas = document.querySelect('canvas')
 const vsSource = `
 attribute vec4 a_Position;
@@ -83,9 +84,9 @@ gl.compileShader(shader)
 
 照样可以运行。
 
-那么如果可以想把shader相关的字符串抽取出来，是不是也可以呢？
+> 那么如果可以想把shader相关的字符串抽取出来，是不是也可以呢？
 
-## 现代前端开发 - ide：vsCode - 工程化 - rollup
+## 二、现代前端开发 - ide：vsCode - 工程化 - rollup
 
 ### 开发环境 - es6 - ide：vsCode
 
@@ -95,13 +96,15 @@ gl.compileShader(shader)
 
     这里我们得要科普一下着色器的文件类型后缀：.glsl
     它也可以是: .vs/.fs/.vert/.fragment 等任意一种后缀
-    那么为什么会有这么多种后缀呢？
+    
+> 那么为什么会有这么多种后缀呢？
+
     实际上官方并没有一个很明确的后缀规范，以上只是公认使用较多的后缀罢了。
     但是所有引擎都是用字符串来理解shader语言的这一点没错。
 
 下面我们使用.vert来举例：
 
-``` vert 
+```vert 
 // shader.vert
 attribute vec4 a_Position;
 void main(){
@@ -109,7 +112,7 @@ void main(){
 }
 ```
 
-``` ts
+```typescript
 // index.ts
 import vsSource from './shader.vert'
 const canvas = document.querySelect('canvas')
@@ -126,19 +129,22 @@ gl.compileShader(shader)
 
 我们在项目的根目录下创建一个index.d.ts的类型声明文件：
 
-``` ts
+```typescript
 declare module '*.vert'
 declare module '*.frag'
 declare module '*.vs'
 declare module '*.fs'
 declare module '*.glsl'
 ```
+
 将上面这些代码复制进去，意思是告诉ts解释器，这里的这些文件你知道就好（默认当作字符串处理）。
 保存之后开发环境就不会报错了。
 
-那么为什么我们要大费周章的用这些后缀名的文件呢？
+> 那么为什么我们要大费周章的用这些后缀名的文件呢？
 * 首先一点就是关注点分离，一个逻辑中的着色器对象可能会有很多。我们想在ts中直接用他们没错，但是又不想要ts中充斥着这些非js引擎可以理解的臃肿的代码；
-* 其次，glsl es语言在我们的ts文件中完全没有任何的代码提示，我们需要健壮的代码提示功能，那么如何可以免费获得代码提示呢？还记得这一趴的小标题吗：ide：vsCode；
+* 其次，glsl es语言在我们的ts文件中完全没有任何的代码提示，我们需要健壮的代码提示功能
+
+> 那么如何可以免费获得代码提示呢？还记得这一趴的小标题吗：ide：vsCode；
 
 我们在vsCode的扩展应用商店中搜索：ext:vert 或 raczzalan.webgl-glsl-editor。
 
@@ -158,16 +164,16 @@ declare module '*.glsl'
 
 - 安装依赖
 - 由于我们的项目使用TypeScript开发，所以，必要的几件不能缺少：
-``` bash
+```bash
 npm i typescript rollup rollup-plugin-node-resolve rollup-plugin-commonjs rollup-plugin-typescript2 --save-dev
 ```
 - 安装glsl文件解析器（有能力的也可以自己写这个解析器哈）
-``` bash
+```bash
 npm i rollup-plugin-glslify --save-dev
 ```
 
 - rollup.config.ts 配置项
-``` ts
+```typescript
 import path from "path";
 import resolve from "rollup-plugin-node-resolve"; // 依赖引用插件
 import commonjs from "rollup-plugin-commonjs"; // commonjs模块转换插件
@@ -223,7 +229,7 @@ export default outputMap.map((output) => {
 ```
 
 - package.json 补充配置
-``` json
+```json
 {
     ...
     "name": "webgl",
@@ -240,14 +246,14 @@ export default outputMap.map((output) => {
 
 在根目录
 
-``` bash
+```bash
 npm run build
 ```
 构建完成后我们就可以在dist文件中看到我们编译完成的js文件,
 
 我们打开看一下，我们之前import的vertex变量
 
-``` js
+```javascript
 var vsSource = "#define GLSLIFY 1\nattribute vec4 a_Position;void main(){gl_Position=a_Position;}"; // eslint-disable-line
 
 ```
