@@ -23,6 +23,8 @@ categories:
 
 好在我们在学习TypeScript之后，认识就有了一定的改变，我们使用TypeScript的视点来观察下面这一段代码。
 
+<!-- more -->
+
 ### 使用类型审查
 
 ```html

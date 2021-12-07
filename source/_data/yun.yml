@@ -1,11 +1,16 @@
 # 自定义主题的主色调
 colors:
   primary: "#6200ee"
-  # bg: "#F5F5F5"
+  # block: "#ffffff45"
+  bg: "#ffffff45"
   selection_bg: "#8e71c1" # 选取文字时的背景色
   # 标签云中标签的起始色和结束色
   # tag_start_color:
   # tag_end_color:
+  dark:
+    primary: "#6200ee"
+    block: "#00000045"
+    selection_bg: "#8e71c1" # 选取文字时的背景色
 
 # 设置导航对应图标及链接
 menu:
@@ -157,6 +162,9 @@ trianglify:
   height: 600
   palette: '["YlGnBu", "GnBu", "Purples", "Blues"]'
   opacity: 0.5
+
+post_card:
+  opacity: 0.6
 
 # 打赏
 reward:
