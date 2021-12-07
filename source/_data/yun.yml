@@ -41,10 +41,30 @@ tags:
   JavaScript: "#F4DF4F"
   TypeScript: "#317AC6"
   WebGL: "#F4645F"
+  osu: pink
+  MAD: "#00a1d6"
 
 # 可以为你的分类指定色彩，默认色 #333。
 categories:
   笔记: dimgray
+  osu: pink
+  MAD: "#00a1d6"
+
+post_meta:
+  # 是否显示文字（如：发表于、更新于，若关闭则只显示图标与时间信息）
+  item_text: true
+  # 是否显示创建时间
+  created_at: true
+  # 是否显示更新时间
+  updated_at: true
+  # 是否显示类别
+  categories: true
+  # 是否显示标签
+  tags: true
+
+post_edit:
+  enable: true
+  url: https://github.com/Meglody/Meglody.github.io/tree/main/source/
 
 # 如果您有想自定义的资源要加载，请添加到 head 中。
 # 遵照以下示例，自定义您要添加的 css 与 js 资源。
@@ -88,6 +108,24 @@ social:
     link: https://space.bilibili.com/453065
     icon: icon-bilibili-line
     color: "#FF8EB3"
+  
+# 随机在网站主页显示一句中二的话。（默认使用 一言 作为 API）
+say:
+  enable: false
+# say:
+#   enable: true
+#   api: https://cdn.jsdelivr.net/gh/ElpsyCN/say@gh-pages/sentences.json
+#   src: /js/say.js
+#   # https://developer.hitokoto.cn/sentence/
+#   hitokoto:
+#     enable: true
+#     api: https://v1.hitokoto.cn
+
+mourn:
+  enable: true
+  days:
+    - "5-12"
+    - "12-13"
 
 # 标语动画
 # 首页的垂直交错排列文字效果。默认开启。
@@ -138,7 +176,7 @@ reward:
 # 头像
 avatar:
   enable: true
-  url: /images/avatar2.jpeg
+  url: https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/avatar2.jpeg
   rounded: true
   opacity: 1
   mickey_mouse: false
@@ -146,3 +184,7 @@ avatar:
     enable: true
     emoji: 🐳
     message: 神游中
+
+# 在 sidebar 的最下方，添加醒目的图标链接。
+# 相比社交链接，图标更大。你可以放置你的页面导航，友情链接等。
+pages:
