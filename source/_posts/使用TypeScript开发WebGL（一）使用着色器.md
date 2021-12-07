@@ -7,6 +7,9 @@ tags:
 - TypeScript
 categories:
 - 笔记
+author: 卡西猫倒
+email: 30755703@qq.com
+readmore: true
 ---
 
 ## 一、前言

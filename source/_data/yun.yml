@@ -12,6 +12,25 @@ colors:
     block: "#00000045"
     selection_bg: "#8e71c1" # 选取文字时的背景色
 
+comment:
+  candidates:
+    - waline
+  tips:
+    - 如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/Meglody/Meglody.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。
+
+waline:
+  enable: true
+  serverURL: https://gh-comments-5z0r2ute3-meglody.vercel.app/
+  visitor: true
+  comment: true
+  emoji:
+    - https://cdn.jsdelivr.net/gh/walinejs/emojis@latest/bilibili/
+    - https://cdn.jsdelivr.net/gh/walinejs/emojis@latest/weibo/
+    - https://cdn.jsdelivr.net/gh/walinejs/emojis@latest/qq/
+  locale:
+    placeholder: 填写邮箱，可以收到回复通知哦～
+  requiredMeta: ["nick"]
+
 # 设置导航对应图标及链接
 menu:
   home:
