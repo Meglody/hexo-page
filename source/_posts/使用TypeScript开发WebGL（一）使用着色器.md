@@ -1,7 +1,7 @@
 ---
 title: 使用TypeScript开发WebGL（一）使用着色器
 date: 2021-12-06 10:59:53
-updated: 2021-12-07 13:48:43
+updated: 2021-12-07 16:34:34
 tags: 
 - WebGL
 - TypeScript
@@ -148,9 +148,11 @@ declare module '*.glsl'
 
 > 那么如何可以免费获得代码提示呢？还记得这一趴的小标题吗：ide：vsCode；
 
-我们在vsCode的扩展应用商店中搜索：ext:vert 或 raczzalan.webgl-glsl-editor。
+<div class="success">
 
-会搜索到一款叫“WebGl GLSL Editor”的插件，安装它。
+> 我们在vsCode的扩展应用商店中搜索：ext:vert 或 raczzalan.webgl-glsl-editor。会搜索到一款叫“WebGl GLSL Editor”的插件，安装它。
+
+</div>
 
 之后我们在html、vert、glsl、fragment后缀的文件中编辑都会有健壮的glsl es的语法提示了。
 
@@ -262,8 +264,6 @@ var vsSource = "#define GLSLIFY 1\nattribute vec4 a_Position;void main(){gl_Posi
 
 vsSource被编译成了一个字符串，这样就证明我们使用的TypeScript和外部的glsl文件已经全部成功的编译完成了，
 
-引入到html中，直接运行，
-
-至此，生产环境部分也搞定了。
+引入到html中，直接运行，至此，生产环境部分也搞定了。
 
 下一篇可能会讲TypeScript在canvas上下文中类型提示的便携性。
