@@ -33,7 +33,7 @@ i18n_dir: :lang
 skip_render:
   - README.md
   # source的解析需要跳过提供给谷歌Seo的html文件
-  - /_seo/google550712f1d46ca7ea.html
+  - source/_seo/google550712f1d46ca7ea.html
 
 # Writing
 new_post_name: :title.md # File name of new posts
