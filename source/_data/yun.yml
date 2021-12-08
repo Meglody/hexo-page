@@ -12,6 +12,7 @@ colors:
     block: "#00000045"
     selection_bg: "#8e71c1" # 选取文字时的背景色
 
+# 评论相关
 comment:
   candidates:
     - waline
@@ -30,6 +31,20 @@ waline:
   locale:
     placeholder: 填写邮箱，可以收到回复通知哦～
   requiredMeta: ["nick"]
+
+# 谷歌站点分析
+google_analytics:
+  enable: true
+  id: G-DBJ06R3DVX
+  // 注意：最近新建的谷歌分析账号ID已经修改，格式如：G-XXXXXXXXXX，可以直接填入id一项，功能正常。
+  // 站点配置文件`_config.yml`中的站点部署的 url 应与 CNAME 中的域名（或xxxxx.github.io）一致
+
+# source的解析需要跳过提供给谷歌Seo的html文件
+skip_render:
+  - /_seo/google550712f1d46ca7ea.html
+
+# 开启百度自动推送
+baidu_push: true
 
 # 设置导航对应图标及链接
 menu:
