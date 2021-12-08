@@ -7,3 +7,7 @@ categories:
 tags:
 - osu
 ---
+
+![Bilibili - VideoCover](https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/bilibili-cover/bilibili-cover-1.webp)_https://www.bilibili.com/video/BV1e7411b7cz_
+
+<!-- more -->
