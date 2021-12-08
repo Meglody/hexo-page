@@ -39,10 +39,6 @@ google_analytics:
   // 注意：最近新建的谷歌分析账号ID已经修改，格式如：G-XXXXXXXXXX，可以直接填入id一项，功能正常。
   // 站点配置文件`_config.yml`中的站点部署的 url 应与 CNAME 中的域名（或xxxxx.github.io）一致
 
-# source的解析需要跳过提供给谷歌Seo的html文件
-skip_render:
-  - /_seo/google550712f1d46ca7ea.html
-
 # 开启百度自动推送
 baidu_push: true
 
