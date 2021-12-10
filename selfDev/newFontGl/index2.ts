@@ -10,15 +10,15 @@ const bannerWrapper = document.querySelector('#banner')
 bannerWrapper!.appendChild(canvas)
 let gl = canvas.getContext('webgl') as WebGLRenderingContext
 const simplifyAmount = ref(0)
-const colors = ref([0,0,0,1])
+const colors = ref([1,1,1,1])
 const text = ref("el psy kongroo")
 const calculate = () => {
     const ret = parseFloat((Math.random() * 0.19).toFixed(2))
     simplifyAmount.value = ret
-    const r = parseFloat((Math.random() * 0.1 + 0.8).toFixed(2))
-    const g = parseFloat((Math.random() * 0.1 + 0.6).toFixed(2))
-    const b = parseFloat((Math.random() * 0.1 + 0.4).toFixed(2))
-    colors.value = [r, g, b, 1]
+    // const r = parseFloat((Math.random() * 0.1 + 0.8).toFixed(2))
+    // const g = parseFloat((Math.random() * 0.1 + 0.6).toFixed(2))
+    // const b = parseFloat((Math.random() * 0.1 + 0.4).toFixed(2))
+    // colors.value = [r, g, b, 1]
 }
 
 const createRenderer = () => {
@@ -43,7 +43,7 @@ let renderer = createRenderer()
 const render = (gl: WebGLRenderingContext) => {
     const width = canvas.width
     const height = canvas.height
-    gl.clearColor(0,0,0,1)
+    gl.clearColor(0,0,0,0)
     gl.clear(gl.COLOR_BUFFER_BIT)
 
     let pad = 20
