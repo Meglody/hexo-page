@@ -1,6 +1,6 @@
 import useShader, { locationType } from './useShader'
 import {Matrix4} from 'three'
-import imgSrc from './images/mf.jpg'
+import imgSrc from './images/handled/glass03.jpeg'
 import cubicVertexShader from './shaders/cubic/cubic.vert'
 import cubicFragmentShader from './shaders/cubic/cubic.frag'
 import particleVertexShader from './shaders/particles/particles.vert'

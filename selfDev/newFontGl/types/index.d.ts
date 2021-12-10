@@ -1,0 +1,11 @@
+declare module 'gl-now';
+declare module 'gl-shader';
+declare module 'a-big-triangle';
+declare module 'gl-render-text';
+declare module 'fontpath-gl';
+declare module 'gl-mat4';
+declare module '*.ttf';
+declare module 'gl-vignette-background';
+declare module 'color-string';
+declare module 'canvas-testbed';
+declare module 'fontpath-gl/triangulate';

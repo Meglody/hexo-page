@@ -1,0 +1,26 @@
+diff --git a/node_modules/poly2tri/dist/poly2tri.js b/node_modules/poly2tri/dist/poly2tri.js
+index cd21e5d..057d1ce 100644
+--- a/node_modules/poly2tri/dist/poly2tri.js
++++ b/node_modules/poly2tri/dist/poly2tri.js
+@@ -1841,7 +1841,7 @@ SweepContext.prototype.triangulate = function() {
+  * Steinter points). Warning : these values are not available if the triangulation 
+  * has not been done yet.
+  * @public
+- * @returns {{min:Point,max:Point}} object with 'min' and 'max' Point
++ * @returns {min:Point,max:Point} object with 'min' and 'max' Point
+  */
+ // Method added in the JavaScript version (was not present in the c++ version)
+ SweepContext.prototype.getBoundingBox = function() {
+diff --git a/node_modules/poly2tri/src/sweepcontext.js b/node_modules/poly2tri/src/sweepcontext.js
+index aa3f887..77b5cbb 100644
+--- a/node_modules/poly2tri/src/sweepcontext.js
++++ b/node_modules/poly2tri/src/sweepcontext.js
+@@ -335,7 +335,7 @@ SweepContext.prototype.triangulate = function() {
+  * Steinter points). Warning : these values are not available if the triangulation 
+  * has not been done yet.
+  * @public
+- * @returns {{min:Point,max:Point}} object with 'min' and 'max' Point
++ * @returns {min:Point,max:Point} object with 'min' and 'max' Point
+  */
+ // Method added in the JavaScript version (was not present in the c++ version)
+ SweepContext.prototype.getBoundingBox = function() {

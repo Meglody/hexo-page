@@ -1,0 +1,39 @@
+{
+  "name": "newfontgl",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "module": "index.module.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c rollup.config.ts && ./cp.bash"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^21.0.1",
+    "@rollup/plugin-json": "^4.1.0",
+    "@types/rollup-plugin-node-builtins": "^2.1.2",
+    "@types/rollup-plugin-node-globals": "^1.4.1",
+    "patch-package": "^6.4.7",
+    "rollup": "^2.61.0",
+    "rollup-plugin-node-builtins": "^2.1.2",
+    "rollup-plugin-node-globals": "^1.4.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-typescript2": "^0.31.1",
+    "typescript": "^4.5.2"
+  },
+  "dependencies": {
+    "a-big-triangle": "^1.0.3",
+    "canvas-testbed": "^1.0.4",
+    "color-string": "^1.9.0",
+    "fontpath-gl": "^3.0.0",
+    "fontpath-test-fonts": "0.0.4",
+    "gl-mat4": "^1.2.0",
+    "gl-now": "^1.4.0",
+    "gl-render-text": "0.0.1",
+    "gl-shader": "^4.3.1",
+    "gl-vignette-background": "^2.0.1",
+    "vue": "^3.2.24"
+  }
+}

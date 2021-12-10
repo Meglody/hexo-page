@@ -1,0 +1,13 @@
+diff --git a/node_modules/fontpath-renderer/demo/bundle/tris.js b/node_modules/fontpath-renderer/demo/bundle/tris.js
+index 17a9a30..426d624 100644
+--- a/node_modules/fontpath-renderer/demo/bundle/tris.js
++++ b/node_modules/fontpath-renderer/demo/bundle/tris.js
+@@ -3907,7 +3907,7 @@ SweepContext.prototype.triangulate = function() {
+  * Steinter points). Warning : these values are not available if the triangulation 
+  * has not been done yet.
+  * @public
+- * @returns {{min:Point,max:Point}} object with 'min' and 'max' Point
++ * @returns {min:Point,max:Point} object with 'min' and 'max' Point
+  */
+ // Method added in the JavaScript version (was not present in the c++ version)
+ SweepContext.prototype.getBoundingBox = function() {

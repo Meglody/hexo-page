@@ -1,0 +1,35 @@
+diff --git a/node_modules/gl-render-text/text.js b/node_modules/gl-render-text/text.js
+index c4e6b61..492954d 100644
+--- a/node_modules/gl-render-text/text.js
++++ b/node_modules/gl-render-text/text.js
+@@ -6,16 +6,20 @@ var drawCanvas = document.createElement("canvas")
+ var drawContext = drawCanvas.getContext("2d")
+ 
+ function makeColorString(rgb) {
+-  return "rgba(" + rgb.map(function(x) {
+-    if(x < 0) {
+-      return "0"
+-    } else if(x < 16) {
+-      return 255.0*x
+-    } else if(x >= 255) {
+-      return "255"
+-    }
+-    return (x|0).toString(16)
+-  }, "1.0").join("")
++    return "rgba(" + rgb.map(function(x) {
++      const fn = (x) => {
++          if(x < 0) {
++            return 0
++          } else if(x < 16) {
++            return 255.0*x
++          } else if(x >= 255) {
++            return 255
++          }
++          return x
++      }
++      const ret = fn(x)
++      return (ret|0).toString(16)
++    }).join("") + "ff)"
+ }
+ 
+ function createText(gl, str, options) {
