@@ -6,7 +6,8 @@
   "module": "index.module.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "rollup -c rollup.config.ts && ./cp.bash"
+    "build": "rollup -c rollup.config.ts && ./cp.bash",
+    "postinstall": "patch-package"
   },
   "author": "",
   "license": "ISC",
