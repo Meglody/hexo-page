@@ -350,4 +350,167 @@ new Webpack.DefinePlugin({
 })
 ```
 
+### 良好的typescript支持
 
+> 其实就一句话，使用TS编写代码与对TS类型支持友好是两码事，看例子：
+
+```typescript
+function foo(val: any) {
+    return val
+}
+const res = foo(0) // const res: any
+```
+
+```typescript
+function foo<T>(val: T) {
+    return val
+}
+const res = foo(0) // const res: 0
+```
+
+Vue为做到完善的TS类型支持，做了很大的努力，具体可以搜索`'runtime-core/src/apiDefineComponent.ts'`文件
+
+
+## 第三章 Vue.js 3 的设计思路
+
+### 声明式的描述UI
+
+Vue.js 3 是一个声明式的UI框架，如果让我们自己设计一个声明式的UI框架，我们自己得先知道前端页面都设计哪些内容:
+
+- DOM元素：例如div标签、a标签
+- 属性: a标签上的href属性，id、class属性
+- 事件: click、keydown
+- 元素的层级结构: DOM树的承接结构，子节点、父节点
+
+> 拿Vue.js 3 的模版语法来说
+
+```html
+<div @click="handler" class="foo" :id="app">
+    hello wolrd
+</div>
+```
+
+- 使用和WHATWG规范的HTML标签一致的方式来描述DOM元素以及层级嵌套关系: `<div> hello world </div>`
+- 使用与HTML标签一致的方式描述属性: `<div class="foo"></div>`
+- 使用`:`或`v-bind`来描述动态绑定的属性: `<div :id="app"></div>`
+- 使用`@`或`v-on`来描述事件: `<div @click="handler"></div>`
+
+可以看到用户不在需要自己手动输入命令式代码绑定事件和属性，只用之前学习HTML的成本就能很轻松的融会贯通，这也是Vue自称渐进式框架的一个原因，学习成本是渐进式的。
+
+除了使用`模版`语言之外，Vue.js 3 还支持使用javascript对象(即`虚拟DOM`)来描述UI:
+
+```javascript
+const title = {
+    tag: 'h1',
+    props: {
+        onClick: handler
+    },
+    children: [
+        {
+            tag: 'span',
+            children: 'hello world'
+        }
+    ]
+}
+```
+
+这也是Vue.js 3 声明式UI`灵活性`的一点体现，使用JS对象(`虚拟DOM`)来描述你甚至可以这么写:
+
+```javascript
+let level = 5
+const title = {
+    tag: `h${level}`,
+    children: level
+}
+```
+用模版语句就像这样:  
+```html
+<h1 v-if="level === 1">1</h1>
+<h1 v-else-if="level === 2">2</h1>
+<h1 v-else-if="level === 3">3</h1>
+<h1 v-else-if="level === 4">4</h1>
+<h1 v-else-if="level === 5">5</h1>
+<!-- ... -->
+```
+
+直接写`虚拟DOM`这种方式少了一个编译模版的过程，`*但是模版享受的优化体验，需要自己去实现(*自己的理解, 不一定正确, 后同)`
+
+
+不过真正在Vue.js 3 中写虚拟DOM，是通过工具函数`h()`来写的，`h`所做的事情，其实就是简化对象的书写方式，其生产的结果就是我们上面写的JS对象:
+
+```javascript
+export default {
+    render() {
+        return h('h1', { onClick: handler }, 1)
+    }
+}
+```
+同：
+```javascript
+export default {
+    render() {
+        return {
+            tag: 'h1',
+            props: {
+                onClick: handler
+            },
+            children: 1
+        }
+    }
+}
+```
+
+所以虚拟DOM和渲染函数其实也都没这么神秘, 渲染函数即是render，要渲染一个组建的内容时，渲染器会调用这个render拿到虚拟DOM，就可以把组件的内容渲染出来了。
+
+
+### 初识渲染器
+
+渲染器即是把`虚拟DOM`变成`真实DOM`并渲染到浏览器里的函数，先写一段虚拟DOM对象:
+
+```javascript
+const vnode = {
+    tag: 'h1',
+    props: {
+        onClick: alert('hello')
+    },
+    children: 'click me'
+}
+```
+
+实现一个最简易的渲染器:
+
+```javascript
+function renderer(vnode, root) {
+    const el = document.createElement(vnode.tag)
+    for(const key in vnode.props) {
+        if(/^on/.test(key)){
+            el.addEventListener(
+                key.substr(2).toLowerCase(),
+                vode.props[key]
+            )
+        }
+    }
+    if(typeof vnode.children === 'string') {
+        const text = document.createTextNode(vnode.children)
+        el.appendChild(text)
+    }else if(Array.isArray(vnode.children)) {
+        vnode.children.forEach(child => renderer(child, el))
+    }
+    root.appendChild(el)
+}
+```
+
+这里的renderer函数接收两个参数:
+
+- vnode: 虚拟DOM对象
+- container: 一个真实的DOM元素，作为挂载容器，渲染器会把渲染出的真实DOM挂载在该容器下。
+
+```javascript
+renderer(vnode, document.body)
+```
+
+这时浏览器就能运行这段代码了，渲染出'click me'文本，点击文本会弹出一个alert。
+
+> 这些只是在创建节点阶段的，渲染器的精髓都在更新节点的阶段。在之后的渲染器Diff部分会详细看。
+
+### 组件的本质
