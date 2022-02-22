@@ -514,3 +514,205 @@ renderer(vnode, document.body)
 > 这些只是在创建节点阶段的，渲染器的精髓都在更新节点的阶段。在之后的渲染器Diff部分会详细看。
 
 ### 组件的本质
+
+虚拟DOM就是用来描述真实DOM的JS对象，那么Vue中的组件又是什么呢？
+
+> 其实虚拟DOM还能够描述组件，组件实际就是一组DOM元素的封装。
+
+```javascript
+const MyComponent = function () {
+    return {
+        tag: 'div',
+        props: {
+            onClick: () => alert('hello')
+        },
+        children: 'click me'
+    }
+}
+```
+
+可以看到，组件的返回值也是虚拟DOM，搞清楚组件的本质就可以用虚拟DOM描述组件了, 我们可以用虚拟DOM中的tag属性存储组件函数:
+
+```javascript
+const vnode = {
+    tag: MyComponent
+}
+```
+
+就像`tag: 'div'`用来描述`<div>`标签一样，`tag: Component`用来描述组件，渲染器需要一个支持组件的能力，所以要将前面写过的renderer做个修改。
+
+```javascript
+function renderer (vnode, container) {
+    if(typeof vnode.tag === 'string'){
+        // 渲染原生标签元素
+        mountElement(vnode, container)
+    }else if (typeof vnode.tag === 'function'){
+        // 渲染组件
+        mountComponent(vnode, container)
+    }
+}
+function mountElement(vnode, container){
+    const el = document.createElement(vnode.tag)
+
+    for(const key in vnode.props){
+        if(/^on/.test(key)){
+            el.addEventListener(
+                key.substr(2).toLowerCase(),
+                vnode.props[key]
+            )
+        }
+    }
+
+    if(typeof vnode.children === 'string'){
+        const text = document.createTextNode(vnode.children)
+        el.appendChild(text)
+    }else if(Array.isArray(vnode.children)){
+        vnode.children.forEach(child => renderer(child, el))
+    }
+
+    container.appendChild(el, container)
+}
+function mountComponent(vnode, container) {
+    // 直接调用组件函数，返回虚拟DOM
+    const subtree = vnode.tag()
+    // 递归调用renderer渲染subtree
+    renderer(subtree, container)
+}
+```
+
+除了函数式组件，我们也能使用一个对象来代表组件，该对象有个render函数，其返回值代表组件要渲染的内容: 
+
+```javascript
+const MyComponent = {
+    render() {
+        return {
+            tag: 'div',
+            props: {
+                onClick: () => alert('hello')
+            },
+            children: 'click me'
+        }
+    }
+}
+```
+
+针对这种情况也需要修改渲染器的判断条件: 
+
+```javascript
+// renderer
+function renderer (vnode, container) {
+    if(typeof vnode.tag === 'string') {
+        mountElement(vnode, container)
+    }else if (typeof vnode.tag === 'object'){
+        mountComponent(vnode, container)
+    }
+}
+// mountComponent
+function mountComponent (vnode, container) {
+    const subtree = vnode.tag.render()
+    renderer(subtree, container)
+}
+```
+
+> Vue中的有状态组件就是用对象结构来表达的，无状态组件则是用函数来表达的。
+
+> (*Vue 2.\*中的functional组件在Vue 3.\*中已经无需再做标记，因为在 Vue 3.\* 中，所有的函数式组件都是用普通函数创建的，性能几乎无差异)
+
+
+### 模版工作原理
+
+不论我们使用虚拟DOM(渲染函数)或是template模版写单文件组件，都是属于声明式的描述UI，Vue中模版是如何变为虚拟DOM的，有关这部分会在后续的编译器详解，这里只要了解大致步骤。
+
+```html
+<div @click="handler">click me</div>
+```
+与直接手写:
+```javascript
+render(){
+    return h('div', { onClick: handler }, 'click me')
+}
+```
+其实是一样的，只是后者少了html编译模版的过程，对于一个组件来说，它要渲染的内容最终都是通过渲染函数`render`来描述的。
+
+完整示例：
+
+```html
+<template>
+    <div @click="handler">click me</div>
+</template>
+<script>
+export default {
+    data: {/* ... */},
+    method: {
+        handler: () => {/* ... */}
+    }
+}
+</script>
+```
+
+会被编译成:
+
+```javascript
+export default {
+    data: {/* ... */},
+    method: {
+        handler: () => {/* ... */}
+    },
+    render(){
+        return h('div', { onClick: handler }, 'click me')
+    }
+}
+```
+
+其结果就是一个JS对象，里面含有一个render函数，就如我们上文所说的组件的本质一样，再编译成虚拟DOM交由渲染器渲染。
+
+
+### Vue.js 是各个模块组成的有机整体
+
+组件的实现依赖于`渲染器`，模版的编译依赖于`编译器`，且编译后生成的代码是根据渲染器和虚拟DOM的设计决定的，因此Vue.js各个模块之间是互相关联、互相制约的，共同构成一个有机整体。
+
+假设有个模版:
+
+```html
+<div id="foo" :class="cls"></div>
+```
+
+根据上文介绍，我们知道编译器会把这段代码编译成渲染函数:
+
+```javascript
+render(){
+    return h('div', { id: 'foo', class: cls })
+}
+```
+
+经过工具函数`h`之后:
+```javascript
+render(){
+    return {
+        tag: 'div',
+        props: {
+            id: 'foo',
+            class: cls
+        }
+    }
+}
+```
+
+可以发现这段代码中`cls`是变量，它可能会发生变化，那么编译器是怎么一眼就知道哪些是静态属性，哪些是动态的呢？
+
+实际上在编译的时候，编译器就会分析动态内容，并在交付给渲染器之前就标注出来，所以在生成虚拟DOM的时候，就会附带上这些信息:
+
+```javascript
+render(){
+    return {
+        tag: 'div',
+        props: {
+            id: 'foo',
+            class: cls
+        },
+        patchFlags: 1 // 假设数字 1 代表class属性是动态的
+    }
+}
+```
+
+这样的配合下，渲染器就知道了什么地方需要当作动态处理，而不需要大费周章去寻找变更点，而之所以编译器会提前做好准备也是因为渲染器和虚拟DOM的设计决定的。
