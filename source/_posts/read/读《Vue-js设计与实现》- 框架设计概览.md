@@ -1,11 +1,15 @@
 ---
 title: 读《Vue.js设计与实现》- 框架设计概览
+date: 2022-02-22 11:06:13
 tags:
 - vue
 - js
 - 虚拟DOM
 - 编译
 - 架构
+categories:
+- 笔记
+readmore: true
 ---
 
 > 了解大型框架要从读源码开始。
