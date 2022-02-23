@@ -301,3 +301,221 @@ const obj = new Proxy(data, {
 
 其中`WeakMap`的键是原始对象`target`，值是一个`Map`实例；`Map`的键是原始对象`target`中的`key`，值是一个由副作用函数组成的`Set`实例。
 
+![WeakMap、Map和Set之间的关系-动图](https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/article-images/read-vuejs/WeakMap、Map和Set之间的关系.gif)
+
+![WeakMap、Map和Set之间的关系](https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/article-images/read-vuejs/WeakMap、Map和Set之间的关系.png)
+
+> 有关使用WeakMap：
+
+> WeakMap对于key的引用是`弱引用`，所以WeakMap经常用于储存那些只有当key所引用的对象`存在`时（没有被垃圾回收器回收）才有价值的信息。
+
+```javascript
+const map = new Map()
+const wm = new WeakMap()
+
+(function(){
+    const foo = {foo: 1}
+    const bar = {bar: 1}
+    map.set(foo, 1)
+    wm.set(bar, 1)
+})()
+```
+
+当上面的代码执行完IIFE之后，垃圾回收器会认为: 在IIFE之外`不存在任何需要`用到局部变量`bar`的地方了，所以对于`bar`的引用已经不再需要了。此时垃圾回收器会把bar从内存中移除，我们无法获取weakmap的key，也就无法通过weakmap取得对象`bar`，这是WeakMap的`特性`(* WeakMap是不可遍历对象，不可被迭代器访问)。
+
+> 所以桶的外层结构使用WeakMap可以有效的防止内存溢出的发生。
+
+最后我们对现阶段成果做个封装，抽象出`track`和`trigger`两个函数:
+
+```javascript
+const bucket = new WeakMap()
+
+const obj = new Proxy(data, {
+    get(target, key) {
+        track(target, key)
+        return target[key]
+    }
+    set(target, key, newVal) {
+        trigger(target, key, newVal)
+        return true
+    }
+})
+
+function track(target, key){
+    if(!activeEffect) return
+    // 根据target从“桶”中取得depsMaps，它是一个Map类型： key ---> effects
+    let depsMap = bucket.get(target)
+    // 如果不存在depsMaps则创建并与target关联
+    if(!depsMap){
+        bucket.set(depsMap = new Map())
+    }
+    // 根据key从depsMap中得到deps，它是一个Set类型，里面储存着与当前key相关的所有副作用函数: effects
+    let deps = depsMap.get(key)
+    // 如果不存在deps则创建并与key关联
+    if(!deps){
+        depsMap.set(deps = new Set())
+    }
+    // 最后将当前激活的副作用函数添加到“桶”中
+    deps.add(activeEffect)
+}
+
+function tigger(target, key, newVal){
+    // 设置属性值
+    target[key] = newVal
+    // 同上查找逻辑
+    const depsMap = bucket.get(target)
+    if(!depsMap) return
+    // 同上查找逻辑
+    const effects = depsMap.get(key)
+    // 执行副作用函数
+    effects && effects.forEach(fn => fn())
+}
+```
+
+这样能给我们带来极大的灵活性，至此`问题二`解决。
+
+### 分支切换与cleanup
+
+首先我们需要明确分支切换的定义，如下代码所示：
+
+```javascript
+const data = { ok: true, text: 'hello world' }
+const obj = new Proxy(data, { /* ... */ })
+effect(() => {
+    document.body.innerText = obj.ok ? obj.text : 'not'
+})
+```
+
+`effectFn`内部存在一个`三元表达式`，根据`obj.ok`值的不同，会执行不同的代码分支，即`obj.ok`的值发生变化时，代码的执行会跟着变化，这就是所谓的`分支切换`。
+
+`分支切换`可能会产生遗留的`副作用函数`。`obj.ok`初始值为`true`时，会读取`obj.ok`和`obj.text`两个字段。此时`副作用函数`与`响应式数据`之间建立的关系入下：
+
+```yml
+target
+ - ok
+    - effectFn
+ - text
+    - effectFn
+```
+
+此时并没有什么问题，修改`obj.ok`和`obj.text`都应该去触发`effectFn`副作用函数的执行。
+
+但是一旦`obj.ok`变为`false`之后并触发副作用函数执行，由于此时代码相当于是:
+
+```javascript
+...
+document.body.innerText = false ? obj.text : 'not'
+...
+```
+
+`obj.text`此时不会被读取，只会触发`obj.ok`的读取操作，所以理想情况下副作用函数`effectFn`不应该被字段`obj.text`所对应的依赖`集合`收集到。
+
+也就是说，`obj.ok`修改为`false`之后，无论再怎么修改`obj.text`的值都不应该触发副作用函数`effectFn`的执行，但按照前文的实现，我们还没有做到这一点，`问题三`出现了。
+
+为了解决这个问题，我们需要在每次副作用函数执行的时候先`把它从与之关联的所有依赖集合中删除`。
+
+<!-- ![这里可能需要一张动图]() -->
+
+当副作用函数执行完毕后，会重新建立联系，新的联系中不会包含`遗留`的副作用函数。所以接下来我们就要实现一个`每次副作用函数执行前从依赖集合中移除的自身`的操作。
+
+要将副作用函数从之前所有与之关联的依赖集合中移除，就需要明确知道哪些依赖集合收集了它，因此我们需要重新设计副作用函数: 
+
+```javascript
+let activeEffect
+function effect(fn){
+    // 封装
+    const effectFn = () => {
+        activeEffect = fn
+        fn()
+    }
+    // 用于收集与该副作用函数相关联的依赖集合的数组
+    effectFn.deps = []
+    // 延迟执行
+    effectFn()
+}
+```
+
+那`effectFn.deps`又是怎么收集依赖集合的？我们需要修改一下`track`函数：
+
+```javascript
+function track(target, key){
+    if(!activeEffect) return
+    let depsMap = bucket.get(target)
+    if(!depsMap){
+        bucket.set(depsMap = new Map())
+    }
+    let deps = depsMap.get(key)
+    if(!deps){
+        depsMap.set(deps = new Set())
+    }
+    // 将当前激活的副作用函数添加到依赖集合中
+    deps.add(activeEffect)
+    // 将当前的依赖集合添加到当前激活的副作用函数的相关依赖集合数组中(实际上就是一种双向添加)
+    activeEffect.deps.push(deps)
+}
+```
+
+于是`effectFn.deps`数组中就收集了与副作用函数自身相关联的`依赖集合`。
+
+下面我们就需要对其进行`清理`了，即：`每次副作用函数执行就将其自身从依赖集合中删除`，为此我们需要写一个`cleanup`函数:
+
+```javascript
+function cleanup() {
+    effectFn.deps.forEach(deps => {
+        // 从每个依赖集合中移除当前副作用函数
+        deps.delete(effectFn)
+    })
+    // 重置effectFn.deps数组
+    effectFn.deps.length = 0
+}
+```
+
+在副作用函数中去调用`cleanup`: 
+
+```javascript
+let activeEffect
+function effect(fn){
+    const effectFn = () => {
+        // 执行清理
+        cleanup(effectFn)
+        activeEffect = effectFn
+        fn()
+    }
+    effectFn.deps = []
+    effectFn()
+}
+```
+
+至此我们的响应式系统已经可以避免副作用函数产生遗留了。
+
+![分支切换与cleanup](https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/%E5%88%86%E6%94%AF%E5%88%87%E6%8D%A2%E4%B8%8Ecleanup.gif)
+
+但如果此时尝试运行代码会`导致无限循环执行`，最后爆栈，其原因出在`trigger`函数中:
+
+```javascript
+function trigger(target, key, newVal) {
+    const depsMap = bucket.get(target)
+    if(!depsMap) return
+    const effects = depsMap.get(key)
+    effects && effects.forEach(fn => fn()) // 新产生的问题来自于这里
+}
+```
+
+在`effectFn`副作用函数内部，我们在执行完`cleanup`后，会`执行一次原始副作用函数`。外层`trigger`函数对`依赖集合的forEach遍历仍在进行中`时，又被`读取操作拦截`后添加到`依赖集合`中，forEach永远`执行不完`。
+
+对于这个问题我们只需要在forEach的集合上在套一层`new Set()`即可：
+
+```javascript
+function trigger(target, key, newVal) {
+    const depsMap = bucket.get(target)
+    if(!depsMap) return
+    const effects = depsMap.get(key)
+    effects && new Set(effects).forEach(fn => fn())
+}
+```
+
+相当于用new Set() 做了一次`缓存`操作(* 这里是否使用`WeakSet`会更好？)。
+
+至此，`问题三`解决了。
+
+### 嵌套的effect与effect栈
