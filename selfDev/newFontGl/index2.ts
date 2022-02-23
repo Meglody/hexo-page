@@ -12,6 +12,7 @@ let gl = canvas.getContext('webgl') as WebGLRenderingContext
 const simplifyAmount = ref(0)
 const colors = ref([1,1,1,1])
 const text = ref("el psy kongroo")
+const cursor = ref("_")
 const calculate = () => {
     const ret = parseFloat((Math.random() * 0.19).toFixed(2))
     simplifyAmount.value = ret
@@ -31,7 +32,7 @@ const createRenderer = () => {
         color: colors.value,
         //the triangulation function, use the default poly2tri
         triangulate: triangulate,
-        text: text.value,
+        text: text.value + cursor.value,
         align: 'left',
         mode: gl.LINE_STRIP
     })
@@ -61,21 +62,19 @@ const render = (gl: WebGLRenderingContext) => {
 } 
 
 const cursorShow = ref<boolean>(false)
-const allowBlink = ref(true)
+// const allowBlink = ref(true)
 const blinkCursor = () => {
-    if(!allowBlink.value){
-        if(cursorShow.value && text.value.slice(-1) === '_'){
-            text.value = text.value.slice(0, -1)
-        }
-        return
-    }
+    // if(!allowBlink.value){
+    //     if(cursorShow.value && text.value.slice(-1) === '_'){
+    //         text.value = text.value.slice(0, -1)
+    //     }
+    //     return
+    // }
     if(!cursorShow.value){
-        text.value = text.value + '_'
+        cursor.value = '_'
         cursorShow.value = true
     }else{
-        if(text.value.slice(-1) === '_'){
-            text.value = text.value.slice(0, -1)
-        }
+        cursor.value = ''
         cursorShow.value = false
     }
 }
@@ -106,20 +105,27 @@ const ani = (ts?: number) => {
 ani()
 
 let blinkThrottleTimer: NodeJS.Timeout | null = null
-document.addEventListener('keydown', e => {
-    allowBlink.value = false
-    blinkThrottleTimer && clearTimeout(blinkThrottleTimer)
-    blinkThrottleTimer = setTimeout(() => {
-        allowBlink.value = true
-    }, 1000);
-    let code = e.keyCode;
-    let chr = String.fromCharCode(code).toLowerCase();
-    if (code === 8) {
-        // backspace
-        text.value = text.value.slice(0, -1);
-    } else {
-        if (chr) {
-            text.value += chr;
-        }
-    }
-})
+// document.addEventListener('keydown', e => {
+//     allowBlink.value = false
+//     blinkThrottleTimer && clearTimeout(blinkThrottleTimer)
+//     blinkThrottleTimer = setTimeout(() => {
+//         allowBlink.value = true
+//     }, 1000);
+//     let code = e.keyCode;
+//     let chr = String.fromCharCode(code).toLowerCase();
+//     if (code === 8) {
+//         // backspace
+//         text.value = text.value.slice(0, -1);
+//     } else {
+//         if (chr) {
+//             text.value += chr;
+//         }
+//     }
+// })
+const textarea = document.createElement('textarea')
+textarea.style.display = 'none'
+textarea.onchange = e => {
+    console.log(e)
+}
+document.body.appendChild(textarea)
+canvas.addEventListener('click', () => textarea.focus())
