@@ -520,3 +520,179 @@ function trigger(target, key, newVal) {
 至此，`问题三`解决了。
 
 ### 嵌套的effect与effect栈
+
+在Vuejs的设计中effect是支持嵌套的，如:
+
+```javascript
+effect(function effectFn1(){
+    effect(function effectFn2(){
+        /* ... */
+    })
+})
+```
+
+实际上Vuejs的渲染函数就是在一个effect中执行的:
+
+```javascript
+const Foo = {
+    render(){
+        return /* ... */
+    }
+}
+```
+
+即为:
+
+```javascript
+effect(() => {
+    Foo.render()
+})
+```
+
+发生嵌套时:
+
+```javascript
+const Bar = {
+    render(){
+        return /* ... */
+    }
+}
+// Foo 组件渲染了 Bar 组件
+const Foo = {
+    render(){
+        return <Bar /> // jsx语法
+    }
+}
+```
+
+```javascript
+effect(() => {
+    Foo.render()
+    effect(() => {
+        Bar.render()
+    })
+})
+```
+
+接下来我们拿上文实现的响应式系统测试运行一下:
+
+```javascript
+const data = {
+    foo: true, bar: true
+}
+const obj = new Proxy(data, /* ... */)
+let temp1, temp2
+effect(function effectFn1() {
+    console.log('effectFn1执行')
+    effect(function effectFn2() {
+        console.log('effectFn2执行')
+        temp2 = obj.bar
+    })
+    temp1 = obj.foo
+})
+```
+
+理想状态下，我们应该是先执行`effectFn1`，将`effectFn1`收集到`obj.foo`对应的依赖集合中，之后执行`effectFn2`，将`effectFn2`收集到`obj.bar`对应的依赖集合中，对应的树型结构应该是如下:
+
+```yml
+target
+ - foo
+    - effectFn1
+ - bar
+    - effectFn2
+```
+
+这种情况下，我们希望修改`obj.foo`的值会触发`effectFn1`和`effectFn2`执行，而修改`obj.bar`时只触发`effectFn2`执行，然而此时我们修改`obj.foo`时会发现:
+
+```bash
+'effectFn2执行'
+```
+
+输出的仅仅是`effectFn2`执行，`问题四`出现了。
+
+这个问题出现的原因是副作用函数中的activeEffect:
+
+```javascript
+let activeEffect
+function effect(fn){
+    function effectFn(){
+        cleanup(effectFn)
+        activeEffect = effectFn // 问题在这里
+        fn()
+    }
+    effectFn.deps = []
+    effectFn()
+}
+```
+
+其实际执行的是这样的程序:
+
+```javascript
+let activeEffect
+effectFn1.deps = []
+cleanup(effectFn1)
+activeEffect = effectFn1
+console.log('effectFn1执行')
+effectFn2.deps = []
+cleanup(effectFn2)
+activeEffect = effectFn2 // 问题在这里
+console.log('effectFn2执行')
+temp2 = obj.bar // 触发 bar 的读取拦截，将effectFn2 添加到 bar 对应的依赖集合中
+temp1 = obj.foo // 触发 foo 的读取拦截，将effectFn2 添加到 foo 对应的依赖集合中
+```
+
+activeEffect变量所存储的`当前副作用函数`只能有一个，当发生嵌套时，`内层副作用函数`会覆盖这个变量，等内层运行栈运行结束的时候变量已经被污染了。
+
+所以我们需要重新设计一个栈的数据结构，当嵌套函数完成时弹出最近一次的`副作用函数`即可。
+
+代码如下:
+
+```javascript
+let activeEffect, effectStack = []
+function effect(fn) {
+    function effectFn() {
+        cleanup(effectFn)
+        // 激活副作用函数
+        activeEffect = effectFn
+        // 每次激活副作用函数都先向栈中压入这个副作用函数
+        effectStack.push(effectFn)
+        fn()
+        // 执行完上一个运行栈再从栈中弹出一个副作用函数
+        effectStack.pop()
+        // 重新激活本次运行栈中的副作用函数
+        activeEffect = effectStack[effectStack.length - 1]
+    }
+    effectFn.deps = []
+    effectFn()
+}
+```
+
+修改过后，代码执行步骤如下:
+
+```javascript
+let activeEffect, effectStack = []
+effectFn1.deps = []
+cleanup(effectFn1)
+activeEffect = effectFn1
+effectStack.push(effectFn1)
+console.log('effectFn1执行')
+effectFn2.deps = []
+cleanup(effectFn2)
+activeEffect = effectFn2
+effectStack.push(effectFn2)
+console.log('effectFn2执行')
+temp2 = obj.bar // 触发 bar 的读取拦截，将effectFn2 添加到 bar 对应的依赖集合中
+effectStack.pop()
+activeEffect = effectFn1 // 问题解决了
+temp1 = obj.foo // 触发 foo 的读取拦截，将effectFn1 添加到 foo 对应的依赖集合中
+effectStack.pop()
+activeEffect = undefined
+```
+
+自己画了个动图帮助理解:
+
+![副作用函数栈-动图](https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/article-images/read-vuejs/副作用函数栈.gif)
+
+
+至此`问题四`解决了。
+
