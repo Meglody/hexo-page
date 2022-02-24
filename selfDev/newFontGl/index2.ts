@@ -6,15 +6,26 @@ import { ref } from 'vue'
 const canvas = document.createElement('canvas')
 canvas.width = window.innerWidth
 canvas.height = window.innerHeight
+canvas.style.background = 'antiquewhite'
 const bannerWrapper = document.querySelector('#banner')
 bannerWrapper!.appendChild(canvas)
 let gl = canvas.getContext('webgl') as WebGLRenderingContext
 const simplifyAmount = ref(0)
 const colors = ref([1,1,1,1])
-const text = ref("el psy kongroo")
+const preSets = ["hello world", "el psy kongroo", `${new Date().toLocaleDateString()}`, 
+    `let angle = 0\n\r
+    let value\n\r
+    const step = () =\> {\n\r
+        angle++\n\r
+        value = Math.abs(Math.sin(angle))\n\r
+        requestAnimationFrame(() =\> step())\n\r
+    }\n\r
+    `
+]
+const text = ref(preSets[Math.floor(Math.random()*3)])
 const cursor = ref("_")
 const calculate = () => {
-    const ret = parseFloat((Math.random() * 0.19).toFixed(2))
+    const ret = parseFloat((Math.random() * 0.14).toFixed(2))
     simplifyAmount.value = ret
     // const r = parseFloat((Math.random() * 0.1 + 0.8).toFixed(2))
     // const g = parseFloat((Math.random() * 0.1 + 0.6).toFixed(2))
@@ -22,13 +33,14 @@ const calculate = () => {
     // colors.value = [r, g, b, 1]
 }
 
+console.log(TestFont)
 const createRenderer = () => {
     calculate()
     return createText(gl, {
         fill: true,
         simplifyAmount: simplifyAmount.value,
         font: TestFont,
-        fontSize: 150,
+        fontSize: Math.max(32, 150 / Math.ceil(text.value.length / 30)),
         color: colors.value,
         //the triangulation function, use the default poly2tri
         triangulate: triangulate,
@@ -44,7 +56,7 @@ let renderer = createRenderer()
 const render = (gl: WebGLRenderingContext) => {
     const width = canvas.width
     const height = canvas.height
-    gl.clearColor(0,0,0,0)
+    gl.clearColor(1,.3,0,0)
     gl.clear(gl.COLOR_BUFFER_BIT)
 
     let pad = 20
@@ -62,14 +74,7 @@ const render = (gl: WebGLRenderingContext) => {
 } 
 
 const cursorShow = ref<boolean>(false)
-// const allowBlink = ref(true)
 const blinkCursor = () => {
-    // if(!allowBlink.value){
-    //     if(cursorShow.value && text.value.slice(-1) === '_'){
-    //         text.value = text.value.slice(0, -1)
-    //     }
-    //     return
-    // }
     if(!cursorShow.value){
         cursor.value = '_'
         cursorShow.value = true
@@ -78,7 +83,6 @@ const blinkCursor = () => {
         cursorShow.value = false
     }
 }
-
 
 render(gl)
 
@@ -104,28 +108,35 @@ const ani = (ts?: number) => {
 
 ani()
 
-let blinkThrottleTimer: NodeJS.Timeout | null = null
-// document.addEventListener('keydown', e => {
-//     allowBlink.value = false
-//     blinkThrottleTimer && clearTimeout(blinkThrottleTimer)
-//     blinkThrottleTimer = setTimeout(() => {
-//         allowBlink.value = true
-//     }, 1000);
-//     let code = e.keyCode;
-//     let chr = String.fromCharCode(code).toLowerCase();
-//     if (code === 8) {
-//         // backspace
-//         text.value = text.value.slice(0, -1);
-//     } else {
-//         if (chr) {
-//             text.value += chr;
-//         }
-//     }
-// })
-const textarea = document.createElement('textarea')
-textarea.style.display = 'none'
-textarea.onchange = e => {
-    console.log(e)
+document.body.addEventListener('keypress', e => {
+    text.value += e.key.length === 1 ? e.key : '\n\r'
+})
+let lastDown = ''
+document.body.addEventListener('keydown', e => {
+    if(lastDown + e.key === 'ControlBackspace' || lastDown + e.key === 'MetaBackspace'){
+        console.log('删除一行')
+        deleteLine()
+    }else{
+        lastDown = e.key
+    }
+})
+document.body.addEventListener('keyup', e => {
+    if(e.key === 'Backspace' && text.value){
+        while(text.value.endsWith('\n\r')){
+            text.value = text.value.slice(0, -2)
+        }
+        text.value = text.value.slice(0, -1)
+    }
+    if(e.key === 'Control' || e.key === 'Meta'){
+        lastDown = ''
+    }
+})
+
+const deleteLine = () => {
+    while(text.value && !text.value.endsWith('\n\r')){
+        text.value = text.value.slice(0, -1)
+    }
+    while(text.value.endsWith('\n\r')){
+        text.value = text.value.slice(0, -2)
+    }
 }
-document.body.appendChild(textarea)
-canvas.addEventListener('click', () => textarea.focus())
