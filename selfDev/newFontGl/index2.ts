@@ -6,7 +6,6 @@ import { ref } from 'vue'
 const canvas = document.createElement('canvas')
 canvas.width = window.innerWidth
 canvas.height = window.innerHeight
-canvas.style.background = 'antiquewhite'
 const bannerWrapper = document.querySelector('#banner')
 bannerWrapper!.appendChild(canvas)
 let gl = canvas.getContext('webgl') as WebGLRenderingContext
@@ -22,7 +21,7 @@ const preSets = ["hello world", "el psy kongroo", `${new Date().toLocaleDateStri
     }\n\r
     `
 ]
-const text = ref(preSets[Math.floor(Math.random()*3)])
+const text = ref(preSets[Math.floor(Math.random()*4)])
 const cursor = ref("_")
 const calculate = () => {
     const ret = parseFloat((Math.random() * 0.14).toFixed(2))
@@ -33,7 +32,6 @@ const calculate = () => {
     // colors.value = [r, g, b, 1]
 }
 
-console.log(TestFont)
 const createRenderer = () => {
     calculate()
     return createText(gl, {
@@ -50,12 +48,20 @@ const createRenderer = () => {
     })
 }
 
-const ortho = mat4.create()
+const projection = mat4.create()
+// 视野，观察空间的大小,如果想要一个真实的观察效果，它的值通常设置为45.0f
+const fieldOfView = 45 * Math.PI / 180
+// 设置了平截头体的近和远平面。我们通常设置近距离为0.1f，而远距离设为100.0f。
+const zNear = 0
+const zFar = 100.0
 let renderer = createRenderer()
 
 const render = (gl: WebGLRenderingContext) => {
     const width = canvas.width
     const height = canvas.height
+    // 宽高比，由视口的宽除以高所得
+    const aspect = width / height
+
     gl.clearColor(1,.3,0,0)
     gl.clear(gl.COLOR_BUFFER_BIT)
 
@@ -63,8 +69,9 @@ const render = (gl: WebGLRenderingContext) => {
     renderer.layout(window.innerWidth-pad*2); 
 
     //renderer expects upper-left origin 
-    mat4.ortho(ortho, 0, width, height, 0, 0, 1)
-    renderer.projection = ortho
+    // const p = mat4.perspective(projection,fieldOfView,aspect,zNear,zFar)
+    mat4.ortho(projection, 0, width, height, 0, 0, 1)
+    renderer.projection = projection
 
     let b = renderer.getBounds()
     let x = width/2 - b.width/2,
