@@ -704,6 +704,219 @@ activeEffect = undefined
 effect(() => obj.foo++)
 ```
 
-此处的副作用函数，既读取了`obj.foo`，也设置了`obj.foo`的值: 首先读取`obj.foo`的值，触发track操作，将`副作用函数`存入`Set`依赖集合，其次设置`obj.foo`的值`+1`，触发`trigger`操作，即把`Set`中刚存入的`副作用函数`取出并执行了，`副作用函数`正在执行中又触发了读取`obj.foo`的`track`操作......
+此处的副作用函数，既读取了`obj.foo`，也设置了`obj.foo`的值，`问题五`出现了: 首先读取`obj.foo`的值，触发track操作，将`副作用函数`存入`Set`依赖集合，此时读取操作还正在进行中，又设置了`obj.foo`的值`+1`，触发`trigger`操作，即把`Set`中刚存入的`副作用函数`取出并执行了。`副作用函数`正在执行中又触发了读取`obj.foo`的`track`操作......
 
-`问题五`出现了。
+为了解决这个问题我们只要简单的在`trigger`函数遍历依赖集合时过滤一下即可：
+
+```javascript
+function trigger(targer, key, newVal) {
+    const depsMap = bucket.get(target)
+    if(!depsMap) return
+    const effects = depsMap.get(key)
+    const newEffects = new Set(effects)
+    newEffects.forEach(fn => {
+        if(fn !== activeEffect) fn()
+    })
+}
+```
+
+过滤掉当前激活的`副作用函数`，就可以避免类似自增操作后产生的无限递归的问题，`问题五`解决。
+
+### 调度执行
+
+可调度性是响应式系统中一个很重要的特性，所谓可调度性，是指当`trigger`触发副作用重新执行时，有能力决定副作用函数的执行时机、次数以及方式。
+
+```javascript
+const data = { foo: 1 }
+const obj = new Proxy(data, {/* ... */})
+effect(() => {
+    console.log(obj.foo)
+})
+
+obj.foo++
+
+console.log('结束了')
+```
+
+这段代码输出如下:
+
+```shell
+1
+2
+'结束了'
+```
+
+假设我需要它打印:
+
+```shell
+1
+'结束了'
+2
+```
+
+有什么办法在不调整业务代码的同时做到呢？这时候就需要响应系统支持`调度`。
+
+我们为`effect`设置一个选项参数，允许用户`传入自定义调度器`:
+
+```javascript
+effect(() => {
+    console.log(obj.foo)
+},
+// options
+{
+    // 调度器 scheduler 是一个函数
+    scheduler(fn){
+        // ...
+    }
+})
+```
+
+我们需要在`effect`函数内部，把选项挂在`副作用函数`上面:
+
+```javascript
+function effect(fn, options = {}){
+    function effectFn(){
+        clearEffect(fn)
+        activeEffect = effectFn
+        effectStack.push(effectFn)
+        fn()
+        effectStack.pop()
+        activeEffect = effectStack[effectStack.length - 1]
+    }
+    effectFn.deps = []
+    effectFn.options = options
+    effectFn()
+}
+```
+
+有了调度器，我们就可以在`trigger`触发副作用函数重新执行时，调用用户传入的调度器函数，把`控制权移交给用户`:
+
+```javascript
+function trigger(target, key, newVal) {
+    const depsMap = bucket.get(target)
+    if(!depsMap) return
+    const effects = depsMap.get(key)
+    const newEffects = new Set()
+    effects.forEach(fn => {
+        if(fn !== activeEffect) {
+            // 存入非激活的副作用函数
+            newEffects.add(fn)
+        }
+    })
+    newEffects.forEach(effectFn => {
+        if(effectFn.options.scheduler){
+            // 使用传入调度器执行
+            effectFn.options.scheduler(effectFn)
+        }else{
+            // 直接执行
+            effectFn()
+        }
+    })
+}
+```
+
+在`trigger`触发副作用函数执行时，我们优先判断该副作用函数是否存在`调度器`，如果有，就让用户自己控制如何执行，并把副作用函数传递给`调度器`，否则直接执行副作用函数。
+
+有了这个基础之后，就可以实现前文的调度需求了:
+
+```javascript
+const data = { foo: 1 }
+const obj = new Proxy(data, { /* ... */ })
+effect(() => {
+    console.log(obj.foo)
+}, {
+    scheduler(fn){
+        // 将副作用函数放入一个宏任务队列中执行
+        setTimeout(fn)
+    }
+})
+
+obj.foo++
+
+console.log('结束了')
+```
+
+我们使用一个`setTimeout`函数开启一个宏任务，来执行副作用函数fn，这样就能实现期望的打印顺序了：
+
+```shell
+1
+结束了
+2
+```
+
+> 除了控制副作用函数的执行时机，我们还能做到控制它的执行次数，这一点也尤为重要，思考如下例子：
+
+```javascript
+const data = { foo: 1 }
+const obj = new Proxy(data, { /* ... */ })
+effect(() => {
+    console.log(obj.foo)
+})
+
+obj.foo++
+obj.foo++
+```
+
+它的输出如下:
+
+```shell
+1
+2
+3
+```
+
+由输出可知，`obj.foo`的值由`1`经过两次自增最后变成了`3`，`2`是其过度状态。假设我们只关心结果，不想知道过程，那么第二次打印就是多余的，我们期望的打印结果是：
+
+```shell
+1
+3
+```
+
+其中不包含过渡态，基于调度器，我们可以很容易的实现此功能：
+
+```javascript
+const jobQueue = new Set()
+const p = Promise.resolve()
+
+let isFlushing = false
+function flushJobs() {
+    if(isFlushing) return false
+    isFlushing = true
+    p.then(() => {
+        jobQueue.forEach(fn => fn())
+    }).finally(() => {
+        isFlushing = false
+    })
+}
+
+const data = { foo: 1 }
+const obj = new Proxy(data, { /* ... */ })
+
+effect(() => {
+    console.log(obj.foo)
+}, {
+    scheduler(fn){
+        jobQueue.add(fn)
+        flushJobs()
+    }
+})
+
+obj.foo++
+obj.foo++
+```
+
+首先我们定义了一个任务队列`jobQueue`，它是一个`Set`数据结构，目的是利用`Set`数据结构自动去重的能力。接着我们每次调度执行时，都会先将`副作用函数`添加到`jobQueue`队列中，并尝试使用一个`flushJobs`函数刷新任务队列。我们把目光移到flushJobs函数，因为其有一个`isFlushing`的标志，无论执行多少次函数，在一个微任务周期内，队列只会刷新一次。
+
+整段代码的效果是，连续对`obj.foo`进行两次自增操作，会同步且连续的两次调用`scheduler`调度函数，意味着同一个副作用函数会被`jobQueue`添加两次，但由于`jobQueue`是一个`Set`数据结构，会自动去重，所以最终`jobQueue`中只会有一项任务，即当前副作用函数。类似的`flushJobs`也会同步且连续的执行两次，但由于`isFlushing`标志的存在，实际一个微任务周期只会执行一次，当微任务队列开始执行时会遍历`jobQueue`，由于此时`jobQueue`只有一个副作用函数，所以只会执行一次，而此时`obj.foo`的值已经是`3`了，这样我们就实现了期望的输出:
+
+```shell
+1
+3
+```
+> Vue.js在多次连续修改响应式数据只会触发一次更新正是因为内部实现了一个更完善的调度器，思路与上文相同。
+
+### 计算属性 computed 与 lazy
+
+
+
+
