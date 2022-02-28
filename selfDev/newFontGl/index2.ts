@@ -116,6 +116,7 @@ const ani = (ts?: number) => {
 ani()
 
 document.body.addEventListener('keypress', e => {
+    e.preventDefault()
     text.value += e.key.length === 1 ? e.key : '\n\r'
 })
 let lastDown = ''
