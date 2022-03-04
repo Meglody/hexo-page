@@ -106,6 +106,7 @@ post_edit:
 head:
   css: 
     - /css/markdown-mine.css
+    - /css/markdown-meglody.css
   js:
     base:
     async:

@@ -360,7 +360,7 @@ function track(target, key){
     deps.add(activeEffect)
 }
 
-function tigger(target, key, newVal){
+function trigger(target, key, newVal){
     // 设置属性值
     target[key] = newVal
     // 同上查找逻辑
@@ -917,6 +917,230 @@ obj.foo++
 
 ### 计算属性 computed 与 lazy
 
+基于以上`effect`的实现，其实就可以帮你建造Vuejs 3种的`computed`计算属性了，在这之前得先了解一下懒执行的`effect`，即`lazy`的`effect`。举个例子：
 
+```javascript
+effect(() => console.log(obj.foo)) // 现在这个副作用函数会立即执行
+```
 
+但是在有些场景下，我并不希望它立即执行，而是希望它在需要的时候才执行，例如计算属性。这时我们需要在`options`中添加`lazy`属性来达到目的：
 
+```javascript
+effect(() => console.log(obj.foo), {
+    lazy: true
+})
+```
+
+`lazy`和之前介绍的`scheduler`一样，通过`options`选项对象指定。有了他我们就可以修改`effect`函数的实现逻辑了，当`lazy`为`true`时则不执行副作用函数：（* 但是同`scheduler`不同的是，`lazy`从收集依赖开始就不执行。）
+
+```javascript
+function effect(fn, options = {}){
+    const effectFn = () => {
+        cleanup(effectFn)
+        activeEffect = effectFn
+        effectStack.push(activeEffect)
+        fn()
+        effectStack.pop()
+        activeEffect = effectStack[effectStack.length - 1]
+    }
+    effectFn.deps = []
+    effectFn.options = options
+    if(!options.lazy){
+        effectFn()
+    }
+    return effectFn
+}
+```
+
+通过以上更改，我们就能控制`effectFn`不立即执行，但是，`副作用函数`应该在什么时候执行呢？我们已经将`副作用函数`作为`effect`函数的返回值，这意味着调用`effect`函数时就能拿到`副作用函数`，这样我们就可以考虑先试试手动执行`副作用函数`了：
+
+```javascript
+const effectFn = effect(() => {
+    console.log(obj.foo)
+}, {
+    lazy: true
+})
+// 手动执行
+effectFn()
+```
+
+但光是这样并没有意义，我们需要通过computed拿到一个副作用函数的执行的结果，目前的实现还不能做到，例如：
+
+```javascript
+const effectFn = effect(
+    // 传入一个getter，可能返回任何值
+    () => obj.foo + obj.bar,
+    {
+        lazy: true
+    }
+)
+const res = effectFn()
+```
+
+我们还需要对effect函数内部做一些细微的更改：
+
+```javascript
+function effect(fn, options = {}){
+    const effectFn = () => {
+        cleanup(effectFn)
+        activeEffect = effectFn
+        effectStack.push(effectFn)
+        const res = fn() // 缓存副作用函数的执行结果
+        effectStack.pop()
+        activeEffect = effectFn[effectFn.length - 1]
+        return res // 并把它返回出来
+    }
+    effectFn.deps = []
+    effectFn.options = options
+    if(!options.lazy){
+        effectFn()
+    }
+    return effectFn
+}
+```
+
+这样我们就可以通过懒执行effect返回的副作用函数，拿到计算结果了。接着我们就来实现真正的`computed`计算属性吧：
+
+```javascript
+function computed(getter){
+    const effectFn = effect(getter, {
+        lazyL: true
+    })
+
+    const obj = {
+        // 我们返回一个对象，该对象的value属性是一个访问器属性
+        get value(){
+            const value = effectFn()
+            return value
+        }
+    }
+
+    return obj
+}
+```
+
+我们定义一个`computed`函数，它接受一个`getter`函数作为参数，我们把`getter`函数当作副作用函数传入`effect`中，用它来创建一个`lazy`懒执行的`effect`。`computed`会返回一个对象，对该对象`value`属性的访问会触发副作用函数执行，也就是只有读取`value`值的时候才会执行`effectFn`并将其结果作为返回值返回。
+
+我们现在可以通过computed创建一个计算属性：
+
+```javascript
+const data = {
+    foo: 1, 
+    bar: 2
+}
+const obj = new Proxy(data, { /* ... */ })
+const sum = computed(() => obj.foo + obj.bar)
+console.log(sum.value) // 3
+```
+
+可以看到它可以正确的工作了。不过我们现在只实现了`懒执行`，即当访问`computed`计算属性的`value`才会执行副作用函数。还做不到对值进行`缓存`。
+
+为什么要缓存？当我们多次访问sum.value时，effectFn多次被执行，即使是obj.foo和obj.bar本身都没有产生变化：
+
+```javascript
+console.log(sum.value) // 3
+console.log(sum.value) // 3
+console.log(sum.value) // 3
+```
+
+以上每次访问都会触发effectFn计算。为了解决这个问题，我们需要实现对value值的缓存：
+
+```javascript
+function computed(getter){
+    let value
+    let dirty = true
+    const effectFn = effect(getter, {
+        lazy: true
+    })
+
+    const obj = {
+        get value(){
+            if(dirty){
+                value = effectFn()
+                dirty = false
+            }
+            return value
+        }
+    }
+
+    return obj
+}
+```
+
+当`dirty`被置为`true`时，才会执行副作用函数，之后`dirty`会被置为`false`，当value属性再被访问时，直接返回之前的计算结果。
+
+显然，代码目前到这儿还有问题：如果我们此时更改`obj.foo`和`obj.bar`的值并不会触发value值的更改，但是他们的修改还是会触发effectFn，我们需要再借助`scheduler`调度的能力了。
+
+```javascript
+function computed(getter) {
+    let value
+    let dirty = true
+
+    const effectFn = effect(getter, {
+        lazy: true,
+        scheduler(){
+            // 把脏值重置为true，下次读取就会执行effectFn更新value值了
+            dirty = true
+        }
+    })
+
+    const obj = {
+        get value(){
+            if(dirty){
+                value = effectFn()
+                dirty = false
+            }
+            return value
+        }
+    }
+
+    return obj
+}
+```
+
+这样，当下一次访问value属性时，dirty属性已经被恢复成true了，副作用函数会重新执行更新value值，这样就能达到缓存value值的目的了。
+
+现在我们的计算属性已经趋于完美了，但还是需要考虑一下嵌套的情况：
+
+```javascript
+const sum = computed(() => obj.foo + obj.bar)
+const sumRes = computed(() => sum.value)
+obj.foo++
+console.log(sumRes.value)
+```
+
+从本质上讲，这就是一个`effect`嵌套问题，目前我们可以外部`effect`执行触发内部`effect`执行，但是内部`effect`不会收集外部`effect`的副作用函数，解决这个问题，我们需要重新用到`track`和`trigger`这两个我们提前封装的方法：
+
+```javascript
+function computed(getter) {
+    let value
+    let dirty = true
+
+    const effectFn = effect(getter, {
+        lazy: true,
+        scheduler(){
+            dirty = true
+            // 执行外部设置逻辑
+            trigger(obj, 'value')
+        }
+    })
+
+    const obj = {
+        get value(){
+            if(dirty){
+                value = effectFn()
+                dirty = false
+            }
+            // 收集外部副作用函数
+            track(obj, 'value')
+            return value
+        }
+    }
+
+    return obj
+}
+```
+
+当读取一个计算属性的`value`值时，手动调用`track`函数收集外部`effect`传入的`副作用函数`(* 由于`闭包`或者说当前执行栈所在的`词法作用域`，此时的`track`中读取到的`activeEffect`为`外部effect`接收的`副作用函数`，即完成了对`() => console.log(sum.value)`的收集)，之后又在scheduler调度器中手动触发trigger，执行外部effect的设置逻辑(* 外部effect也有可能是一个`computed`)。
+
+至此，一个`computed`计算属性被设计出来了。
