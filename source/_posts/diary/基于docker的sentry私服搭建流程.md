@@ -10,6 +10,9 @@ tags:
 - docker
 - docker-compose
 - sentry
+categories:
+- 笔记
+readmore: true
 ---
 
 > 本搭建流程基于`docker`和`docker-compose`，以下为我使用的环境版本：
@@ -17,6 +20,8 @@ tags:
 > - docker-compose：1.29.2
 > - sentry：self-hosted(22.1.0)(https://github.com/getsentry/self-hosted/releases/tag/22.1.0)
 > - python: python@3.6
+
+<!-- more -->
 
 ### Requirements
 
