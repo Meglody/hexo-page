@@ -53,7 +53,7 @@ cd self-hosted-22.1.0/
 
 当然运行之前，你得先看一下`sentry/sentry.config.example.py`的配置，包含：
 
-- 数据库，缓存和redis等的基本配置
+- 持久化、缓存和redis等的基本配置
 - 消息队列的基本配置
 - 基于clickhouse的snuba配置
 - web服务的基本配置
@@ -180,7 +180,7 @@ SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 # End of SSL/TLS settings
 ```
 
-- docker-compose.yml（这个改完需要重新`docker-compose build (nginx container id)`之后再`docker-compose up -d`）
+- docker-compose.yml（这个改完需要重新`docker-compose build`之后再`docker-compose up -d`）
 
 ```yml
 nginx:
@@ -241,10 +241,3 @@ server {
 ```
 
 做完以上步骤，如果你的服务器安全组正确开启了`80`和`443`的`TCP`端口，并且证书做好了`解析`并`部署`在服务器上了，应该就可以愉快的使用sentry了！
-
-
-
-
-
-
-
