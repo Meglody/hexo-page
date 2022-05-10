@@ -1593,9 +1593,9 @@ text-table@^0.2.0:
   version "0.2.0"
   resolved "https://registry.nlark.com/text-table/download/text-table-0.2.0.tgz"
 
-three@^0.135.0:
-  version "0.135.0"
-  resolved "https://registry.yarnpkg.com/three/-/three-0.135.0.tgz#cff4ec8edd3c51ce9bc7e88d13e8eafed4d0ddfc"
+three@^0.140.2:
+  version "0.140.2"
+  resolved "https://registry.yarnpkg.com/three/-/three-0.140.2.tgz#ca0b7390d1ce4f7f2850e80afd00ef48fc244491"
 
 "through@>=2.2.7 <3":
   version "2.3.8"
