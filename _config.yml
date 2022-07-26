@@ -111,11 +111,12 @@ ignore:
 theme: yun
 
 # Deployment
-## Docs: https://hexo.io/docs/one-command-deployment
-# 使用 actions-gh-pages@v3 自动化部署
+# generate的时候尝试把图片改成cos的地址
 deploy:
-  # type: git
-  # repo: https://github.com/Meglody/Meglody.github.io
-  # branch: gh-pages
-  # message: deploy
+  type: cos-cdn
+  cloud: tencent
+  bucket: shanghai-1309153523
+  region: ap-shanghai
+  secretId: '${{ secrets.TENCENT_SECRET_ID }}'
+  secretKey: '${{ secrets.TENCENT_SECRET_KEY }}'
 
