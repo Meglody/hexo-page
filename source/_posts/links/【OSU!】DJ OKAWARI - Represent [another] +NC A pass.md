@@ -10,6 +10,6 @@ tags:
 - osu
 ---
 
-![Bilibili - VideoCover](../../images/bilibili-cover/bilibili-cover-1.webp)_https://www.bilibili.com/video/BV1e7411b7cz_
+![bilibili-cover-1](https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/bilibili-cover-1.webp)_https://www.bilibili.com/video/BV1e7411b7cz_
 
 <!-- more -->

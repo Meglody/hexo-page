@@ -69,12 +69,11 @@ function effect() {
 
 即: 当读取obj.text字段的时候，将副作用函数`储存`进一个`“桶”`里面，当设置obj.text字段的时候，再把副作用函数`effect`从`“桶”`里取出并执行即可。
 
-![将副作用函数储存到桶中](https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/article-images/read-vuejs/桶的概念.png)
+![将副作用函数储存到桶中](https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/桶的概念.png)
 
-![把副作用函数从"桶"内取出并执行](https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/article-images/read-vuejs/桶的概念2.png)
+![把副作用函数从"桶"内取出并执行](https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/桶的概念2.png)
 
-![把副作用函数从"桶"内取出并执行-动图](https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/article-images/read-vuejs/桶的概念3.gif)
-
+![把副作用函数从"桶"内取出并执行-动图](https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/桶的概念3.gif)
 问题的关键现在变为了我们如何才能拦截一个对象属性的读取和设置操作。在ES2015之前，我们只能通过Obeject.defineProperty函数实现，这也是Vue.js 2中采用的方式。在ES2015+中，我们可以使用代理对象Proxy来实现，这也是Vue.js 3所采用的方式。
 
 使用Proxy把上面的思路实现:
@@ -302,9 +301,9 @@ const obj = new Proxy(data, {
 
 其中`WeakMap`的键是原始对象`target`，值是一个`Map`实例；`Map`的键是原始对象`target`中的`key`，值是一个由副作用函数组成的`Set`实例。
 
-![WeakMap、Map和Set之间的关系-动图](https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/article-images/read-vuejs/WeakMap、Map和Set之间的关系.gif)
+![WeakMap、Map和Set之间的关系-动图](https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/WeakMap、Map和Set之间的关系.gif)
 
-![WeakMap、Map和Set之间的关系](https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/article-images/read-vuejs/WeakMap、Map和Set之间的关系.png)
+![WeakMap、Map和Set之间的关系](https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/WeakMap、Map和Set之间的关系.png)
 
 > 有关使用WeakMap：
 
@@ -691,8 +690,7 @@ activeEffect = undefined
 
 自己画了个动图帮助理解:
 
-![副作用函数栈-动图](https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/article-images/read-vuejs/副作用函数栈.gif)
-
+![副作用函数栈-动图](https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/副作用函数栈.gif)
 
 至此`问题四`解决了。
 

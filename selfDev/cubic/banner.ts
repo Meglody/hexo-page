@@ -1,6 +1,5 @@
 import useShader, { locationType } from './useShader'
 import {Matrix4} from 'three'
-import imgSrc from './images/handled/glass03.jpeg'
 import cubicVertexShader from './shaders/cubic/cubic.vert'
 import cubicFragmentShader from './shaders/cubic/cubic.frag'
 import particleVertexShader from './shaders/particles/particles.vert'
@@ -147,7 +146,7 @@ const initTexture = async (gl: WebGLRenderingContext, program: WebGLProgram) => 
     // 绑定纹理对象使用TEXTURE_2D纹理
     gl.bindTexture(gl.TEXTURE_2D, texture)
     const image = new Image()
-    image.src = imgSrc
+    image.src = 'https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/glass03.jpeg'
     const ret = await new Promise((resolve) => {
         image.onload = function(){
             // 纹理设置

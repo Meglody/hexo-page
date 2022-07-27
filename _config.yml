@@ -109,14 +109,3 @@ ignore:
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
 theme: yun
-
-# Deployment
-# generate的时候尝试把图片改成cos的地址
-deploy:
-  type: cos-cdn
-  cloud: tencent
-  bucket: shanghai-1309153523
-  region: ap-shanghai
-  secretId: '${{ secrets.TENCENT_SECRET_ID }}'
-  secretKey: '${{ secrets.TENCENT_SECRET_KEY }}'
-

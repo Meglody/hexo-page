@@ -204,25 +204,25 @@ reward:
   comment: 我很可爱，请给我钱.
   methods:
     - name: 支付宝
-      path: https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/alipay.jpg
+      path: https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/alipay.jpg
       color: "#00A3EE"
       icon: icon-alipay-line
     - name: 微信支付
-      path: https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/wechatpay-qrcode.jpg
+      path: https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/wechatpay-qrcode.jpg
       color: "#2DC100"
       icon: icon-wechat-pay-line
 
 # 头像
 avatar:
   enable: true
-  url: https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/avatar2.jpeg
+  url: https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/avatar2.jpeg
   rounded: true
   opacity: 1
   mickey_mouse: false
   status:
     enable: true
-    emoji: 🐳
-    message: 神游中
+    emoji: 🐱‍🐉
+    message: 学习中
 
 # 在 sidebar 的最下方，添加醒目的图标链接。
 # 相比社交链接，图标更大。你可以放置你的页面导航，友情链接等。

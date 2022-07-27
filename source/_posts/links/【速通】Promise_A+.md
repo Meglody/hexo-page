@@ -16,6 +16,6 @@ tags:
 - 队列
 ---
 
-![Bilibili - VideoCover](https://cdn.jsdelivr.net/gh/Meglody/Meglody.github.io@gh-pages/images/bilibili-cover/bilibili-cover-3.png)_https://www.bilibili.com/video/BV11L4y1u7YF_
+![bilibili-cover-3](https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/bilibili-cover-3.png)_https://www.bilibili.com/video/BV11L4y1u7YF_
 
 <!-- more -->
