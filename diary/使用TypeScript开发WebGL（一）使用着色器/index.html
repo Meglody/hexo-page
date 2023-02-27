@@ -1,0 +1,263 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="卡西猫倒"><meta name="copyright" content="卡西猫倒"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>使用TypeScript开发WebGL（一）使用着色器 | 卡西猫倒的小站</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" type="image/svg+xml" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"meglody.github.io","root":"/","title":"卡西猫倒的小站","version":"1.7.0","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg"};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="stylesheet" href="/css/markdown-mine.css"><link rel="stylesheet" href="/css/markdown-meglody.css"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-DBJ06R3DVX"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-DBJ06R3DVX');
+}</script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><meta name="description" content="一、前言首先对于web系前端来说，我们在使用WebGL开发的首选语言肯定是javascript，在接触着色器语言后，我们知道可以用： &lt;script type&#x3D;&quot;x-shader&#x2F;x-vertex&quot;&gt;&lt;&#x2F;script&gt; &lt;script type&#x3D;&quot;x-shader&#x2F;x-fragment&quot;&gt;&lt;&#x2F;script&gt; 引入的方式，将glsl es引入到我们的JavaScript中来使">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用TypeScript开发WebGL（一）使用着色器">
+<meta property="og:url" content="https://meglody.github.io/diary/%E4%BD%BF%E7%94%A8TypeScript%E5%BC%80%E5%8F%91WebGL%EF%BC%88%E4%B8%80%EF%BC%89%E4%BD%BF%E7%94%A8%E7%9D%80%E8%89%B2%E5%99%A8/index.html">
+<meta property="og:site_name" content="卡西猫倒的小站">
+<meta property="og:description" content="一、前言首先对于web系前端来说，我们在使用WebGL开发的首选语言肯定是javascript，在接触着色器语言后，我们知道可以用： &lt;script type&#x3D;&quot;x-shader&#x2F;x-vertex&quot;&gt;&lt;&#x2F;script&gt; &lt;script type&#x3D;&quot;x-shader&#x2F;x-fragment&quot;&gt;&lt;&#x2F;script&gt; 引入的方式，将glsl es引入到我们的JavaScript中来使">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-12-06T02:59:53.000Z">
+<meta property="article:modified_time" content="2021-12-07T08:34:34.000Z">
+<meta property="article:author" content="卡西猫倒">
+<meta property="article:tag" content="TypeScript">
+<meta property="article:tag" content="WebGL">
+<meta name="twitter:card" content="summary"><script src="/js/ui/mode.js"></script></head><body><canvas id="trianglifyContainer"></canvas><script defer src="https://cdn.jsdelivr.net/npm/trianglify@4/dist/trianglify.bundle.js"></script><script>document.addEventListener("DOMContentLoaded", () => {
+  const pattern = trianglify({
+    width: 800,
+    height: 600,
+    cellSize: 75,
+    palette: ["YlGnBu", "GnBu", "Purples", "Blues"],
+  });
+  const canvasOpts = {
+    applyCssScaling: false
+  }
+  document.body.appendChild(pattern.toCanvas(trianglifyContainer, canvasOpts));
+});</script><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="卡西猫倒"><img width="96" loading="lazy" src="https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/avatar2.jpeg" alt="卡西猫倒"><span class="site-author-status" title="学习中">🐱‍🐉</span></a><div class="site-author-name"><a href="/about/">卡西猫倒</a></div><span class="site-name">卡西猫倒的小站</span><sub class="site-subtitle">过往一瞬，知己者寥数，善己者方能几何？勿忘初心，珍惜现在，随遇而安，岁月静好。</sub><div class="site-desciption">好学前端，喜欢研究工程化/部署运维，TS，WebGL，目前学习WebGL、React、元数据和架构</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">11</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">4</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">30</span></a></div><a class="site-state-item hty-icon-button" target="_blank" rel="noopener" href="https://yun.yunyoujun.cn" title="Yun主题文档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-settings-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://wpa.qq.com/msgrd?v=3&amp;uin=30755703&amp;site=qq&amp;menu=yes" title="QQ" target="_blank" style="color:#12B7F5"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-qq-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/Meglody" title="GitHub" target="_blank" style="color:#181717"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="mailto:30755703@qq.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://music.163.com/#/user/home?id=260476301" title="网易云音乐" target="_blank" style="color:#C10D0C"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-netease-cloud-music-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://space.bilibili.com/453065" title="哔哩哔哩动画" target="_blank" style="color:#FF8EB3"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-bilibili-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">一、前言</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%B1%BB%E5%9E%8B%E5%AE%A1%E6%9F%A5"><span class="toc-number">1.1.</span> <span class="toc-text">使用类型审查</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E7%8E%B0%E4%BB%A3%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91-ide%EF%BC%9AvsCode-%E5%B7%A5%E7%A8%8B%E5%8C%96-rollup"><span class="toc-number">2.</span> <span class="toc-text">二、现代前端开发 - ide：vsCode - 工程化 - rollup</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83-es6-ide%EF%BC%9AvsCode"><span class="toc-number">2.1.</span> <span class="toc-text">开发环境 - es6 - ide：vsCode</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83-%E5%B7%A5%E7%A8%8B%E5%8C%96-rollup"><span class="toc-number">2.2.</span> <span class="toc-text">生产环境 - 工程化 - rollup</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://meglody.github.io/diary/%E4%BD%BF%E7%94%A8TypeScript%E5%BC%80%E5%8F%91WebGL%EF%BC%88%E4%B8%80%EF%BC%89%E4%BD%BF%E7%94%A8%E7%9D%80%E8%89%B2%E5%99%A8/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="卡西猫倒"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="卡西猫倒的小站"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">使用TypeScript开发WebGL（一）使用着色器<a class="post-edit-link" href="https://github.com/Meglody/Meglody.github.io/tree/main/source/_posts/diary/使用TypeScript开发WebGL（一）使用着色器.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:inline-block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <span class="post-meta-icon-text">发表于</span> <time title="创建时间：2021-12-06 10:59:53" itemprop="dateCreated datePublished" datetime="2021-12-06T10:59:53+08:00">2021-12-06</time><span class="post-meta-divider">-</span><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-2-line"></use></svg></span> <span class="post-meta-icon-text">更新于</span> <time title="修改时间：2021-12-07 16:34:34" itemprop="dateModified" datetime="2021-12-07T16:34:34+08:00">2021-12-07</time></div><span class="leancloud_visitors" id="/diary/%E4%BD%BF%E7%94%A8TypeScript%E5%BC%80%E5%8F%91WebGL%EF%BC%88%E4%B8%80%EF%BC%89%E4%BD%BF%E7%94%A8%E7%9D%80%E8%89%B2%E5%99%A8/" data-flag-title="使用TypeScript开发WebGL（一）使用着色器"><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读次数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-eye-line"></use></svg> <span class="leancloud-visitors-count"></span></span></span><span class="post-meta-divider">-</span><a href="#comment"><span class="post-meta-item-icon" title="评论数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-chat-3-line"></use></svg> <span class="waline-comment-count" id="/diary/%E4%BD%BF%E7%94%A8TypeScript%E5%BC%80%E5%8F%91WebGL%EF%BC%88%E4%B8%80%EF%BC%89%E4%BD%BF%E7%94%A8%E7%9D%80%E8%89%B2%E5%99%A8/"></span></span></a><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/%E7%AC%94%E8%AE%B0/" style="--text-color:dimgray" itemprop="url" rel="index"><span itemprop="text">笔记</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/TypeScript/" style="--text-color:#317AC6"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">TypeScript</span></a><a class="tag-item" href="/tags/WebGL/" style="--text-color:#F4645F"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">WebGL</span></a></span></div><div class="post-author"><div class="author-avatar"><img src="https://www.gravatar.com/avatar/d6aba1f597b62642cceb287abb714cf2?s=20&amp;d=https%3A%2F%2Fcdn.jsdelivr.net%2Fgh%2FYunYouJun%2Fcdn%2Fimg%2Favatar%2Fnone.jpg"></div><span class="author-name">卡西猫倒</span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><h2 id="一、前言"><a href="#一、前言" class="headerlink" title="一、前言"></a>一、前言</h2><p>首先对于web系前端来说，我们在使用WebGL开发的首选语言肯定是javascript，在接触着色器语言后，我们知道可以用：</p>
+<pre class="language-html" data-language="html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>x-shader/x-vertex<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token script"></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>x-shader/x-fragment<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token script"></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span></code></pre>
+<p>引入的方式，将glsl es引入到我们的JavaScript中来使用。</p>
+<p>不过在实际开发中，这个引入方式</p>
+<ul>
+<li>一来是不方便跟踪</li>
+<li>二来我们在使用ide开发，代码提示方面没有任何优势怎么行？</li>
+</ul>
+<p>好在我们在学习TypeScript之后，认识就有了一定的改变，我们使用TypeScript的视点来观察下面这一段代码。</p>
+<span id="more"></span>
+
+<h3 id="使用类型审查"><a href="#使用类型审查" class="headerlink" title="使用类型审查"></a>使用类型审查</h3><pre class="language-html" data-language="html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>vShader<span class="token punctuation">"</span></span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>x-shader/x-vertex<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token script"></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>fShader<span class="token punctuation">"</span></span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>x-shader/x-fragment<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token script"></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span></code></pre>
+
+<pre class="language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">const</span> vertexShader <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">querySelector</span><span class="token punctuation">(</span><span class="token string">'#vShader'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>textContent
+<span class="token keyword">const</span> fragmentShader <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">querySelector</span><span class="token punctuation">(</span><span class="token string">'#fShader'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>textContent
+<span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>vertexShader<span class="token punctuation">,</span> fragmentShader<span class="token punctuation">)</span></code></pre>
+
+
+<p>其实通过打印你也能知道，这里的textContent无非只是将shader的代码通过字符串方式读取出来了。</p>
+<p>TypeScript在这里也会标记vertexShader、fragmentShader两个变量为string类型。</p>
+<p>为了验证这一点，我们可以通过TypeScript的类型声明提示来一窥WebGL的gl.shaderSource方法：</p>
+<pre class="language-html" data-language="html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>body</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>canvas</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>canvas<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>canvas</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>body</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>vShader<span class="token punctuation">"</span></span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>x-shader/x-vertex<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token script"></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>fShader<span class="token punctuation">"</span></span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>x-shader/x-fragment<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token script"></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span></code></pre>
+<pre class="language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">const</span> canvas <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">querySelect</span><span class="token punctuation">(</span><span class="token string">'#canvas'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> vsSource <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">querySelect</span><span class="token punctuation">(</span><span class="token string">'#vShader'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>textContent
+<span class="token keyword">const</span> shaderType <span class="token operator">=</span> gl<span class="token punctuation">.</span><span class="token constant">VERTEX_SHADER</span>
+<span class="token keyword">const</span> shader <span class="token operator">=</span> gl<span class="token punctuation">.</span><span class="token function">createShader</span><span class="token punctuation">(</span>shaderType<span class="token punctuation">)</span> <span class="token keyword">as</span> WebGLShader
+gl<span class="token punctuation">.</span><span class="token function">shaderSource</span><span class="token punctuation">(</span>shader<span class="token punctuation">,</span> vsSource<span class="token punctuation">)</span>
+gl<span class="token punctuation">.</span><span class="token function">compileShader</span><span class="token punctuation">(</span>shader<span class="token punctuation">)</span></code></pre>
+<p>通过类型提示我们可以知道：</p>
+<ul>
+<li>shaderType 是一个number类型的索引，用于去查找内存上的地址;</li>
+<li>shader是着色器对象;</li>
+<li>而source只是一个字符串类型;</li>
+</ul>
+<blockquote>
+<p>那么既然是字符串类型，我们何不直接写在TypeScript文件中呢？</p>
+</blockquote>
+<p>于是我们大胆可以这样写：</p>
+<pre class="language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">const</span> canvas <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">querySelect</span><span class="token punctuation">(</span><span class="token string">'canvas'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> vsSource <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">
+attribute vec4 a_Position;
+void main()&#123;
+    gl_Position = a_Position;
+&#125;
+</span><span class="token template-punctuation string">`</span></span>
+<span class="token keyword">const</span> shaderType <span class="token operator">=</span> gl<span class="token punctuation">.</span><span class="token constant">VERTEX_SHADER</span>
+<span class="token keyword">const</span> shader <span class="token operator">=</span> gl<span class="token punctuation">.</span><span class="token function">createShader</span><span class="token punctuation">(</span>shaderType<span class="token punctuation">)</span> <span class="token keyword">as</span> WebGLShader
+gl<span class="token punctuation">.</span><span class="token function">shaderSource</span><span class="token punctuation">(</span>shader<span class="token punctuation">,</span> vsSource<span class="token punctuation">)</span>
+gl<span class="token punctuation">.</span><span class="token function">compileShader</span><span class="token punctuation">(</span>shader<span class="token punctuation">)</span></code></pre>
+
+
+<p>照样可以运行。</p>
+<blockquote>
+<p>那么如果可以想把shader相关的字符串抽取出来，是不是也可以呢？</p>
+</blockquote>
+<h2 id="二、现代前端开发-ide：vsCode-工程化-rollup"><a href="#二、现代前端开发-ide：vsCode-工程化-rollup" class="headerlink" title="二、现代前端开发 - ide：vsCode - 工程化 - rollup"></a>二、现代前端开发 - ide：vsCode - 工程化 - rollup</h2><h3 id="开发环境-es6-ide：vsCode"><a href="#开发环境-es6-ide：vsCode" class="headerlink" title="开发环境 - es6 - ide：vsCode"></a>开发环境 - es6 - ide：vsCode</h3><p>已经2021年了，我们自然要使用现代浏览器的自带支持的es module来写前端代码。</p>
+<p>通过上文我们已经知道了shader在js引擎中通过传递string类型的变量来加载编译，但是我们不再需要去使用script标签来引入。</p>
+<pre><code>这里我们得要科普一下着色器的文件类型后缀：.glsl
+它也可以是: .vs/.fs/.vert/.fragment 等任意一种后缀
+</code></pre>
+<blockquote>
+<p>那么为什么会有这么多种后缀呢？</p>
+</blockquote>
+<pre><code>实际上官方并没有一个很明确的后缀规范，以上只是公认使用较多的后缀罢了。
+但是所有引擎都是用字符串来理解shader语言的这一点没错。
+</code></pre>
+<p>下面我们使用.vert来举例：</p>
+<pre class="language-vert" data-language="vert"><code class="language-vert">&#x2F;&#x2F; shader.vert
+attribute vec4 a_Position;
+void main()&#123;
+    gl_Position &#x3D; a_Position;
+&#125;</code></pre>
+
+<pre class="language-typescript" data-language="typescript"><code class="language-typescript"><span class="token comment">// index.ts</span>
+<span class="token keyword">import</span> vsSource <span class="token keyword">from</span> <span class="token string">'./shader.vert'</span>
+<span class="token keyword">const</span> canvas <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">querySelect</span><span class="token punctuation">(</span><span class="token string">'canvas'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> shaderType <span class="token operator">=</span> gl<span class="token punctuation">.</span><span class="token constant">VERTEX_SHADER</span>
+<span class="token keyword">const</span> shader <span class="token operator">=</span> gl<span class="token punctuation">.</span><span class="token function">createShader</span><span class="token punctuation">(</span>shaderType<span class="token punctuation">)</span> <span class="token keyword">as</span> WebGLShader
+gl<span class="token punctuation">.</span><span class="token function">shaderSource</span><span class="token punctuation">(</span>shader<span class="token punctuation">,</span> vsSource<span class="token punctuation">)</span>
+gl<span class="token punctuation">.</span><span class="token function">compileShader</span><span class="token punctuation">(</span>shader<span class="token punctuation">)</span></code></pre>
+
+<p>这个时候TypeScript语法会提示报错：<br>    找不到模块“./shaders/cubic/cubic.vert”或其相应的类型声明</p>
+<p>意思是告诉你，不行，这里的.vert文件我不认识，你得先给他一个类型声明让我明白他这个模块是干什么的。</p>
+<p>我们在项目的根目录下创建一个index.d.ts的类型声明文件：</p>
+<pre class="language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">declare</span> <span class="token keyword">module</span> <span class="token string">'*.vert'</span>
+<span class="token keyword">declare</span> <span class="token keyword">module</span> <span class="token string">'*.frag'</span>
+<span class="token keyword">declare</span> <span class="token keyword">module</span> <span class="token string">'*.vs'</span>
+<span class="token keyword">declare</span> <span class="token keyword">module</span> <span class="token string">'*.fs'</span>
+<span class="token keyword">declare</span> <span class="token keyword">module</span> <span class="token string">'*.glsl'</span></code></pre>
+
+<p>将上面这些代码复制进去，意思是告诉ts解释器，这里的这些文件你知道就好（默认当作字符串处理）。<br>保存之后开发环境就不会报错了。</p>
+<blockquote>
+<p>那么为什么我们要大费周章的用这些后缀名的文件呢？</p>
+</blockquote>
+<ul>
+<li>首先一点就是关注点分离，一个逻辑中的着色器对象可能会有很多。我们想在ts中直接用他们没错，但是又不想要ts中充斥着这些非js引擎可以理解的臃肿的代码；</li>
+<li>其次，glsl es语言在我们的ts文件中完全没有任何的代码提示，我们需要健壮的代码提示功能</li>
+</ul>
+<blockquote>
+<p>那么如何可以免费获得代码提示呢？还记得这一趴的小标题吗：ide：vsCode；</p>
+</blockquote>
+<div class="success">
+
+<blockquote>
+<p>我们在vsCode的扩展应用商店中搜索：ext:vert 或 raczzalan.webgl-glsl-editor。会搜索到一款叫“WebGl GLSL Editor”的插件，安装它。</p>
+</blockquote>
+</div>
+
+<p>之后我们在html、vert、glsl、fragment后缀的文件中编辑都会有健壮的glsl es的语法提示了。</p>
+<p>至此，我们在开发环境就有了强有力的glsl代码支持，同时也秉承了高聚合低耦合的代码风格，分离了我们开发时的关注点。</p>
+<h3 id="生产环境-工程化-rollup"><a href="#生产环境-工程化-rollup" class="headerlink" title="生产环境 - 工程化 - rollup"></a>生产环境 - 工程化 - rollup</h3><p>以上讲述了TypeScript如何在开发环境使用着色器，但是我们的代码光在本地跑起来可不行。</p>
+<p>接下来我介绍一下我在生产环境的方案。</p>
+<p>我选择rollup作为我代码的打包工具，它轻量，tree shaking，丰富的社区插件，正好能够满足我的需求。</p>
+<ul>
+<li><p>安装依赖</p>
+</li>
+<li><p>由于我们的项目使用TypeScript开发，所以，必要的几件不能缺少：</p>
+<pre class="language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> i typescript rollup rollup-plugin-node-resolve rollup-plugin-commonjs rollup-plugin-typescript2 --save-dev</code></pre></li>
+<li><p>安装glsl文件解析器（有能力的也可以自己写这个解析器哈）</p>
+<pre class="language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> i rollup-plugin-glslify --save-dev</code></pre></li>
+<li><p>rollup.config.ts 配置项</p>
+<pre class="language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">import</span> path <span class="token keyword">from</span> <span class="token string">"path"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> resolve <span class="token keyword">from</span> <span class="token string">"rollup-plugin-node-resolve"</span><span class="token punctuation">;</span> <span class="token comment">// 依赖引用插件</span>
+<span class="token keyword">import</span> commonjs <span class="token keyword">from</span> <span class="token string">"rollup-plugin-commonjs"</span><span class="token punctuation">;</span> <span class="token comment">// commonjs模块转换插件</span>
+<span class="token keyword">import</span> glslify <span class="token keyword">from</span> <span class="token string">'rollup-plugin-glslify'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> ts <span class="token keyword">from</span> <span class="token string">"rollup-plugin-typescript2"</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> <span class="token function-variable function">getPath</span> <span class="token operator">=</span> <span class="token punctuation">(</span>_path<span class="token punctuation">)</span> <span class="token operator">=></span> path<span class="token punctuation">.</span><span class="token function">resolve</span><span class="token punctuation">(</span>__dirname<span class="token punctuation">,</span> _path<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> packageJSON <span class="token keyword">from</span> <span class="token string">"./package.json"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> extensions <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token string">".js"</span><span class="token punctuation">,</span> <span class="token string">".ts"</span><span class="token punctuation">,</span> <span class="token string">".tsx"</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 导入本地ts配置</span>
+<span class="token keyword">const</span> tsPlugin <span class="token operator">=</span> <span class="token function">ts</span><span class="token punctuation">(</span><span class="token punctuation">&#123;</span>
+  tsconfig<span class="token operator">:</span> <span class="token function">getPath</span><span class="token punctuation">(</span><span class="token string">"./tsconfig.json"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  tsconfigOverride<span class="token operator">:</span> <span class="token punctuation">&#123;</span> extensions <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 基础配置</span>
+<span class="token keyword">const</span> commonConf <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
+  <span class="token comment">// 入口文件</span>
+  input<span class="token operator">:</span> <span class="token function">getPath</span><span class="token punctuation">(</span><span class="token string">"./index.ts"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  plugins<span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token function">resolve</span><span class="token punctuation">(</span><span class="token punctuation">&#123;</span>
+      extensions<span class="token punctuation">,</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">glslify</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">commonjs</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    tsPlugin<span class="token punctuation">,</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token comment">// 需要导出的模块类型</span>
+<span class="token keyword">const</span> outputMap <span class="token operator">=</span> <span class="token punctuation">[</span>
+  <span class="token punctuation">&#123;</span>
+    file<span class="token operator">:</span> path<span class="token punctuation">.</span><span class="token function">resolve</span><span class="token punctuation">(</span>__dirname<span class="token punctuation">,</span> packageJSON<span class="token punctuation">.</span>main<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// 通用模块</span>
+    format<span class="token operator">:</span> <span class="token string">"umd"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+  <span class="token punctuation">&#123;</span>
+    file<span class="token operator">:</span> path<span class="token punctuation">.</span><span class="token function">resolve</span><span class="token punctuation">(</span>__dirname<span class="token punctuation">,</span> packageJSON<span class="token punctuation">.</span>module<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// es6模块</span>
+    format<span class="token operator">:</span> <span class="token string">"es"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token function-variable function">buildConf</span> <span class="token operator">=</span> <span class="token punctuation">(</span>options<span class="token punctuation">)</span> <span class="token operator">=></span> Object<span class="token punctuation">.</span><span class="token function">assign</span><span class="token punctuation">(</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span> commonConf<span class="token punctuation">,</span> options<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> outputMap<span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token punctuation">(</span>output<span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">const</span> conf <span class="token operator">=</span> <span class="token function">buildConf</span><span class="token punctuation">(</span><span class="token punctuation">&#123;</span>
+        output<span class="token operator">:</span> <span class="token punctuation">&#123;</span>
+            <span class="token operator">...</span>output<span class="token punctuation">,</span>
+            name<span class="token operator">:</span> packageJSON<span class="token punctuation">.</span>name<span class="token punctuation">,</span>
+        <span class="token punctuation">&#125;</span> 
+    <span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> conf
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre></li>
+<li><p>package.json 补充配置</p>
+<pre class="language-json" data-language="json"><code class="language-json"><span class="token punctuation">&#123;</span>
+    ...
+    <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"webgl"</span><span class="token punctuation">,</span>
+    <span class="token property">"main"</span><span class="token operator">:</span> <span class="token string">"dist/index.umd.js"</span><span class="token punctuation">,</span>
+    <span class="token property">"module"</span><span class="token operator">:</span> <span class="token string">"dist/index.js"</span><span class="token punctuation">,</span>
+    <span class="token property">"typings"</span><span class="token operator">:</span> <span class="token string">"dist/types.index.d.ts"</span><span class="token punctuation">,</span>
+    <span class="token property">"scripts"</span><span class="token operator">:</span> <span class="token punctuation">&#123;</span>
+        <span class="token property">"build"</span><span class="token operator">:</span> <span class="token string">"rollup -c rollup.config.ts"</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span></code></pre></li>
+<li><p>项目打包</p>
+</li>
+</ul>
+<p>在根目录</p>
+<pre class="language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> run build</code></pre>
+<p>构建完成后我们就可以在dist文件中看到我们编译完成的js文件,</p>
+<p>我们打开看一下，我们之前import的vertex变量</p>
+<pre class="language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">var</span> vsSource <span class="token operator">=</span> <span class="token string">"#define GLSLIFY 1\nattribute vec4 a_Position;void main()&#123;gl_Position=a_Position;&#125;"</span><span class="token punctuation">;</span> <span class="token comment">// eslint-disable-line</span>
+</code></pre>
+
+<p>vsSource被编译成了一个字符串，这样就证明我们使用的TypeScript和外部的glsl文件已经全部成功的编译完成了，</p>
+<p>引入到html中，直接运行，至此，生产环境部分也搞定了。</p>
+<p>下一篇可能会讲TypeScript在canvas上下文中类型提示的便携性。</p>
+</div><div id="reward-container"><span class="hty-icon-button button-glow" id="reward-button" title="打赏" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === &quot;none&quot;) ? &quot;block&quot; : &quot;none&quot;;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-hand-coin-line"></use></svg></span><div id="reward-comment">我很可爱，请给我钱.</div><div id="qr" style="display:none;"><div style="display:inline-block"><a target="_blank" rel="noopener" href="https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/alipay.jpg"><img loading="lazy" src="https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/alipay.jpg" alt="支付宝" title="支付宝"></a><div><span style="color:#00A3EE"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-alipay-line"></use></svg></span></div></div><div style="display:inline-block"><a target="_blank" rel="noopener" href="https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/wechatpay-qrcode.jpg"><img loading="lazy" src="https://shanghai-1309153523.cos.ap-shanghai.myqcloud.com/blogImage/wechatpay-qrcode.jpg" alt="微信支付" title="微信支付"></a><div><span style="color:#2DC100"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-wechat-pay-line"></use></svg></span></div></div></div></div><ul class="post-copyright"><li class="post-copyright-author"><strong>本文作者：</strong>卡西猫倒</li><li class="post-copyright-link"><strong>本文链接：</strong><a href="https://meglody.github.io/diary/%E4%BD%BF%E7%94%A8TypeScript%E5%BC%80%E5%8F%91WebGL%EF%BC%88%E4%B8%80%EF%BC%89%E4%BD%BF%E7%94%A8%E7%9D%80%E8%89%B2%E5%99%A8/" title="使用TypeScript开发WebGL（一）使用着色器">https://meglody.github.io/diary/%E4%BD%BF%E7%94%A8TypeScript%E5%BC%80%E5%8F%91WebGL%EF%BC%88%E4%B8%80%EF%BC%89%E4%BD%BF%E7%94%A8%E7%9D%80%E8%89%B2%E5%99%A8/</a></li><li class="post-copyright-license"><strong>版权声明：</strong>本博客所有文章除特别声明外，均默认采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" target="_blank" rel="noopener" title="CC BY-NC-SA 4.0 "><svg class="icon"><use xlink:href="#icon-creative-commons-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-by-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-nc-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-sa-line"></use></svg></a> 许可协议。</li></ul></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/diary/TypeScript%E5%85%83%E7%BC%96%E7%A8%8B%EF%BC%88%E4%B8%80%EF%BC%89/" rel="prev" title="TypeScript元编程（一）"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">TypeScript元编程（一）</span></a></div><div class="post-nav-item"></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/Meglody/Meglody.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="waline"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js", () => {
+  const walineConfig = {"enable":true,"serverURL":"https://gh-comments-5z0r2ute3-meglody.vercel.app/","comment":true,"visitor":true,"emoji":["https://cdn.jsdelivr.net/gh/walinejs/emojis@latest/bilibili/","https://cdn.jsdelivr.net/gh/walinejs/emojis@latest/weibo/","https://cdn.jsdelivr.net/gh/walinejs/emojis@latest/qq/"],"locale":{"placeholder":"填写邮箱，可以收到回复通知哦～"},"requiredMeta":["nick"],"el":"#waline","lang":"zh-CN"}
+  walineConfig.path = "/diary/%E4%BD%BF%E7%94%A8TypeScript%E5%BC%80%E5%8F%91WebGL%EF%BC%88%E4%B8%80%EF%BC%89%E4%BD%BF%E7%94%A8%E7%9D%80%E8%89%B2%E5%99%A8/"
+  walineConfig.dark = 'html[data-user-color-scheme="dark"]'
+  new Waline(walineConfig)
+}, window.Waline);</script></div></main><footer class="sidebar-translate" id="footer"><div class="copyright"><span>&copy; 2019 – 2023 </span><span class="with-love" id="animate"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></span><span class="author"> 卡西猫倒</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.7.0</span></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><script>const date = new Date();
+const today = (date.getMonth() + 1) + "-" + date.getDate()
+const mourn_days = ["5-12","12-13"]
+if (mourn_days.includes(today)) {
+  document.documentElement.style.filter = "grayscale(1)";
+}</script></div></body></html>
